@@ -11,6 +11,7 @@
      quadricula.js        la quadrícula irregular
      geometria.js         parets, finestres, vegetació, mobiliari, torres
      platja-ponts.js      platja i ponts
+     port.js              molls, norais, far i barques amarrades
      cobertes-carrers.js  cantonades, voltes, cobertes, carrers i escales
      poble.js             estat del poble, anàlisi i construcció de la malla
      escena.js            llums, mar, barques, gavines, dia i nit

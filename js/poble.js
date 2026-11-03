@@ -4,6 +4,7 @@
 
 let cells = [], heights = [], carrer = [], nivell = [], forcat = [], tint = [], seed = 1234;
 let pont = [];   // 0 = cap; 1 = pont entre les arestes 0 i 2; 2 = entre l'1 i la 3
+let moll = [];   // 1 = aquest carrer és un moll de port
 let mode = 'casa', colSel = -1, modeTreure = false;
 let townMesh = null, pickMesh = null, faceCell = null, hoverMesh = null;
 let fans = new Map(), posV = new Map(), vora = new Set();
@@ -195,7 +196,9 @@ function construirMalla(){
     if(via){
       sup = paviment(G, cel, ci);
       if(!sup.pla) nEsc++;
-      else mobiliari(G, cel, ci, sup.y, span[ci]);   // a les escales no hi va res
+      else if(!moll[ci]) mobiliari(G, cel, ci, sup.y, span[ci]);   // a les escales no hi va res
+      else if(esPuntaMoll(ci) && !span[ci] && hash3(ci,160,1) < 0.7) far(G, cel.c.x, sup.y, cel.c.z, ci);
+      else mobiliariMoll(G, cel, ci, sup.y);
     }
 
     // sòcol de roca cap a l'aigua, fins al nivell del terra d'aquesta cel·la
@@ -210,6 +213,7 @@ function construirMalla(){
         if(sota >= Math.max(tA, tB) - 1e-6) continue;   // el veí ja tapa aquesta cara
         const mar = sota <= -ROCA + 1e-6;               // cap al mar, la roca s'eixampla
         const A = cel.p[e], B = cel.p[f];
+        if(mar && moll[ci]){ paretMoll(G, A, B, tA, tB, ci, e, cel.c); continue; }   // al port, carreus
         const a = mar ? baix[e] : A, b = mar ? baix[f] : B;
         const roca = hash3(ci,e,11) < 0.5 ? ROCA_A : ROCA_B;
         quad(G, [a.x,sota,a.z], [b.x,sota,b.z], [B.x,tB,B.z], [A.x,tA,A.z], roca);
@@ -290,6 +294,8 @@ function construirMalla(){
   haloMesh.visible = matHalo.opacity > 0.01;
   scene.add(haloMesh);
 
+  posaAmarrats(amarres());
+
   // malla invisible per al picking: una columna per cel·la
   const P = newG(); faceCell = [];
   const gris = [0,0,0];
@@ -347,13 +353,14 @@ function novaCala(s){
   nivell  = new Array(cells.length).fill(0);
   forcat  = new Array(cells.length).fill(false);
   pont    = new Array(cells.length).fill(0);
+  moll    = new Array(cells.length).fill(0);
   tint    = new Array(cells.length).fill(-1);   // -1 = automàtic
 }
 
 // la llavor del poble va a part de la de la cala: `seed` ha de ser sempre
 // la que ha fet la quadrícula, perquè és la que es desa a la partida
 function generarPoble(llavor = seed + 991){
-  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0);
+  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0);
   const rnd = mulberry32(llavor);
   let inici = 0, millor = Infinity;
   cells.forEach((c,i)=>{ const d = Math.hypot(c.c.x, c.c.z); if(d < millor){ millor = d; inici = i; } });

@@ -16,7 +16,8 @@ function marcarHover(ci){
   if(ci < 0){ hoverMesh.visible = false; return; }
   const treu = modeTreure || majPremuda;
   // en els modes que tenen condicions, verd si es pot i vermell si no
-  const valid = mode === 'volta' ? potVolta(ci) : mode === 'pont' ? (pont[ci] > 0 || eixPont(ci) > 0) : null;
+  const valid = mode === 'volta' ? potVolta(ci) : mode === 'pont' ? (pont[ci] > 0 || eixPont(ci) > 0)
+              : mode === 'moll' ? (moll[ci] > 0 || potMoll(ci)) : null;
   hoverMesh.material.color.setHex(treu ? 0xd4704f : valid === null ? 0xffffff : valid ? 0x6fd39a : 0xd4704f);
   hoverMesh.material.opacity = (valid !== null || treu) ? 0.5 : 0.32;
   const cel = cells[ci];
@@ -146,13 +147,23 @@ cv.addEventListener('pointerup', e=>{
           avis('Els ponts van sobre l\'aigua: aquí ja hi ha una casa o un carrer.');
         } else {
           const ax = eixPont(ci);
-          if(!ax) avis('Un pont ha de tocar una casa, un carrer o un altre pont. Amb terra a banda i banda, fa de pont; amb terra a una sola banda, de moll.');
+          if(!ax) avis('Un pont ha de tocar una casa, un carrer o un altre pont. Amb terra a banda i banda, fa de pont; amb terra a una sola banda, d\'embarcador.');
           else { pont[ci] = ax; forcat[ci] = false; avis(''); }
         }
+      } else if(mode === 'moll'){
+        if(treure){
+          if(moll[ci]){ moll[ci] = 0; carrer[ci] = false; nivell[ci] = 0; }
+          avis('');
+        }
+        else if(moll[ci]) avis('Aquí ja hi ha un moll. En mode Carrers, clica\'l per enlairar-lo.');
+        else if(heights[ci] > 0) avis('Aquí hi ha una casa. Els molls es fan sobre l\'aigua.');
+        else if(pont[ci]) avis('Aquí hi ha un pont. Treu-lo primer.');
+        else if(!potMoll(ci)) avis('Un moll ha de tocar terra, un carrer, un pont o un altre moll.');
+        else { moll[ci] = 1; carrer[ci] = true; forcat[ci] = false; avis(''); }
       } else if(mode === 'carrer'){
         if(treure){
           if(carrer[ci] && nivell[ci] > 0) nivell[ci]--;
-          else { carrer[ci] = false; nivell[ci] = 0; }
+          else { carrer[ci] = false; nivell[ci] = 0; moll[ci] = 0; }
         } else if(carrer[ci] && heights[ci] === 0){
           nivell[ci] = Math.min(NIV_MAX, nivell[ci]+1);
         } else {
@@ -195,7 +206,7 @@ addEventListener('resize', ()=>{
 
 /* ---------- 8. Botons ---------- */
 
-const botons = {casa:'m-casa', carrer:'m-carrer', volta:'m-volta', pont:'m-pont', pintar:'m-pintar'};
+const botons = {casa:'m-casa', carrer:'m-carrer', volta:'m-volta', pont:'m-pont', moll:'m-moll', pintar:'m-pintar'};
 function posaMode(m){
   mode = m;
   for(const k in botons){
@@ -206,6 +217,7 @@ function posaMode(m){
   avis(m === 'volta' ? 'Clica el buit que hi ha entre dues cases enfrontades de dos pisos o més.'
      : m === 'pintar' ? 'Tria un color i clica les cases. Amb Treure (o Maj+clic) tornen a automàtic.'
      : m === 'pont' ? 'Deixa aigua entre cases per fer un canal i clica-hi per posar-hi un pont. En verd, on es pot.'
+     : m === 'moll' ? 'Clica l\'aigua que toca la costa per fer-hi un moll. A la punta d\'un moll hi surt un far, i a l\'aigua del costat, barques amarrades.'
      : '');
   if(hoverCi >= 0) marcarHover(hoverCi);
 }
@@ -237,7 +249,8 @@ addEventListener('keydown', e=>{
   if(k === '2') posaMode('carrer');
   if(k === '3') posaMode('volta');
   if(k === '4') posaMode('pont');
-  if(k === '5') posaMode('pintar');
+  if(k === '5') posaMode('moll');
+  if(k === '6') posaMode('pintar');
   if(k === 'x') posaTreure(!modeTreure);
   if(k === 'g') posaGrid(!mostraGrid);
   if(k === 'p') posaPlaces(!autoPlaces);
@@ -310,7 +323,7 @@ document.getElementById('btn-cala').onclick  = ()=>{
   centre.set(0, 1.4, 0); actualitzarCamera(); instantania();
 };
 document.getElementById('btn-buida').onclick = ()=>{
-  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0);
+  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0);
   construirMalla(); instantania();
   avis('Cala buidada. Es pot desfer amb ↶.');
 };

@@ -138,6 +138,33 @@ function posaBarques(){
   redibuixa();
 }
 
+/* --- barques amarrades als molls --- */
+// es guarden per clau (cel·la d'aigua + moll + aresta): les que ja hi eren no es refan
+let amarrats = new Map();
+
+function posaAmarrats(llista){
+  const ara = new Set(llista.map(a => a.clau));
+  for(const [k, b] of amarrats) if(!ara.has(k)){ scene.remove(b.mesh); b.mesh.geometry.dispose(); amarrats.delete(k); }
+  for(const a of llista){
+    if(amarrats.has(a.clau)) continue;
+    const rnd = mulberry32(a.llavor);
+    const mesh = new THREE.Mesh(geomLlaut(rnd), matBarca);
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    mesh.rotation.order = 'YXZ';
+    mesh.position.set(a.x, mar.position.y, a.z);
+    mesh.rotation.y = a.rot;
+    scene.add(mesh);
+    amarrats.set(a.clau, {mesh, x: a.x, z: a.z, fase: rnd()*6.283});
+  }
+}
+
+// una barca que es bressola amb l'onada (s: temps de l'onada)
+function bressola(b, s){
+  b.mesh.position.y = mar.position.y + onada(b.x, b.z, s);
+  b.mesh.rotation.z = Math.sin(s*1.7 + b.fase)*0.05;
+  b.mesh.rotation.x = Math.sin(s*2.3 + b.fase*1.3)*0.06;
+}
+
 /* --- gavines que volten la cala --- */
 const matGavina = new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide});
 let gavines = [];

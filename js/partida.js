@@ -19,7 +19,8 @@ function serialitza(){
     return t;
   };
   return [MARCA, seed, n, autoPlaces ? 1 : 0,
-          enc(heights,0), enc(carrer,0), enc(nivell,0), enc(forcat,0), enc(tint,1), enc(pont,0)].join('|');
+          enc(heights,0), enc(carrer,0), enc(nivell,0), enc(forcat,0), enc(tint,1), enc(pont,0),
+          enc(moll,0)].join('|');
 }
 
 function deserialitza(txt){
@@ -27,8 +28,8 @@ function deserialitza(txt){
   if(p[0] !== MARCA) throw new Error('Això no sembla una partida de Cala.');
   const sd = +p[1], n = +p[2];
   if(p.length < 9 || !Number.isInteger(sd) || !Number.isInteger(n) || n < 1) throw new Error('Capçalera malmesa.');
-  // el camp dels ponts (10è) és posterior: les partides antigues no el tenen
-  const nCamps = p.length >= 10 ? 10 : 9;
+  // els camps dels ponts (10è) i dels molls (11è) són posteriors: les partides antigues no els tenen
+  const nCamps = Math.min(p.length, 11);
   for(let k=4;k<nCamps;k++) if(p[k].length !== n) throw new Error('Les dades no quadren amb el nombre de cel·les.');
 
   // tot es valida abans de tocar l'estat: si falla, la partida actual queda intacta
@@ -43,7 +44,8 @@ function deserialitza(txt){
   };
   const h  = dec(p[4], 0, MAX_H),   ca = dec(p[5], 0, 1), ni = dec(p[6], 0, NIV_MAX),
         fo = dec(p[7], 0, 1),       ti = dec(p[8], 1, PALETA.length-1);
-  const po = nCamps === 10 ? dec(p[9], 0, 2) : new Array(n).fill(0);
+  const po = nCamps >= 10 ? dec(p[9], 0, 2) : new Array(n).fill(0);
+  const mo = nCamps >= 11 ? dec(p[10], 0, 1) : new Array(n).fill(0);
 
   let noves = null;                                 // la cala és determinista
   if(sd !== seed || cells.length !== n){
@@ -58,6 +60,7 @@ function deserialitza(txt){
   forcat  = fo.map(Boolean);
   tint    = ti;
   pont    = po;
+  moll    = mo;
   autoPlaces = p[3] === '1';
 }
 

@@ -18,11 +18,8 @@ function anima(t){
       pos.array[i*3+1] = onada(x, z, s);
     }
     pos.needsUpdate = true;     // amb flatShading les normals les calcula el shader
-    for(const b of barques){    // les barques es bressolen amb l'onada
-      b.mesh.position.y = mar.position.y + onada(b.x, b.z, s);
-      b.mesh.rotation.z = Math.sin(s*1.7 + b.fase)*0.05;
-      b.mesh.rotation.x = Math.sin(s*2.3 + b.fase*1.3)*0.06;
-    }
+    for(const b of barques) bressola(b, s);             // les barques es bressolen amb l'onada
+    for(const b of amarrats.values()) bressola(b, s);
     brut = true;
   }
   if(!brut) return;
