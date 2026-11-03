@@ -20,7 +20,7 @@ function serialitza(){
   };
   return [MARCA, seed, n, autoPlaces ? 1 : 0,
           enc(heights,0), enc(carrer,0), enc(nivell,0), enc(forcat,0), enc(tint,1), enc(pont,0),
-          enc(moll,0), midaCala].join('|');
+          enc(moll,0), midaCala, enc(fars,0), enc(escales,0), enc(roca,0)].join('|');
 }
 
 function deserialitza(txt){
@@ -28,10 +28,12 @@ function deserialitza(txt){
   if(p[0] !== MARCA) throw new Error('Això no sembla una partida de Cala.');
   const sd = +p[1], n = +p[2];
   if(p.length < 9 || !Number.isInteger(sd) || !Number.isInteger(n) || n < 1) throw new Error('Capçalera malmesa.');
-  // els camps dels ponts (10è), dels molls (11è) i de la mida (12è) són posteriors:
-  // les partides antigues no els tenen. Els onze primers tenen un caràcter per cel·la
+  // els camps dels ponts (10è), dels molls (11è), de la mida (12è), dels fars (13è), de les escales (14è)
+  // i de la roca (15è) són posteriors: les partides antigues no els tenen. Tots tenen un caràcter per
+  // cel·la, menys la mida
   const nCamps = Math.min(p.length, 11);
   for(let k=4;k<nCamps;k++) if(p[k].length !== n) throw new Error('Les dades no quadren amb el nombre de cel·les.');
+  for(let k=12;k<Math.min(p.length, 15);k++) if(p[k].length !== n) throw new Error('Les dades no quadren amb el nombre de cel·les.');
   const mida = p.length >= 12 ? p[11] : 'normal';
   if(!esMida(mida)) throw new Error('Mida de cala desconeguda.');
 
@@ -49,6 +51,9 @@ function deserialitza(txt){
         fo = dec(p[7], 0, 1),       ti = dec(p[8], 1, PALETA.length-1);
   const po = nCamps >= 10 ? dec(p[9], 0, 2) : new Array(n).fill(0);
   const mo = nCamps >= 11 ? dec(p[10], 0, 1) : new Array(n).fill(0);
+  const fa = p.length >= 13 ? dec(p[12], 0, 1) : new Array(n).fill(0);
+  const es = p.length >= 14 ? dec(p[13], 0, 4) : new Array(n).fill(0);
+  const ro = p.length >= 15 ? dec(p[14], 0, 1) : new Array(n).fill(0);
 
   let noves = null;                                 // la cala és determinista
   if(sd !== seed || mida !== midaCala || cells.length !== n){
@@ -64,6 +69,9 @@ function deserialitza(txt){
   tint    = ti;
   pont    = po;
   moll    = mo;
+  fars    = fa;
+  escales  = es;
+  roca    = ro;
   autoPlaces = p[3] === '1';
 }
 

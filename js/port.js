@@ -1,4 +1,4 @@
-/* Cala · port: molls de carreus, norais, far i barques amarrades */
+/* Cala · port: molls de carreus, norais, fars, illots i barques amarrades */
 
 /* ============================================================
    PORT
@@ -9,6 +9,10 @@
    l'aspecte: parets de carreus amb cantell en lloc de roca,
    norais a la vora, estris de pesca i, a la punta, un far.
    A l'aigua del costat hi queden barques amarrades.
+
+   A part, en mode Fars se'n pot posar un a qualsevol lloc: a
+   l'aigua surt dret damunt d'un illot de roca, i en un carrer,
+   una plaça o un moll plans, damunt del paviment.
    ============================================================ */
 
 const CARREU   = C('#bfae8f');   // pedra dels molls
@@ -18,7 +22,7 @@ const CAIXES   = [FUSTA, C('#3f6f9a'), C('#d8a23a')];
 const BOIA     = C('#e9b23a');
 
 // aigua lliure, on hi pot anar una barca
-const aiguaLliure = w => w >= 0 && heights[w] === 0 && heff[w] <= 0 && !esCarrer[w] && !pont[w] && !esSorra[w];
+const aiguaLliure = w => w >= 0 && heights[w] === 0 && heff[w] <= 0 && !esCarrer[w] && !pont[w] && !esSorra[w] && !fars[w];
 
 // es pot fer un moll aquí? aigua (o un carrer ja fet) que toqui terra, un carrer, un pont o un altre moll
 function potMoll(ci){
@@ -91,25 +95,56 @@ function esPuntaMoll(ci){
   return t.length === 1 && moll[t[0]] > 0;
 }
 
-// far de bocana: torre a franges, balconada i llanterna que s'encén de nit
-function far(G, x, y, z, k){
+// far de bocana: torre a franges, balconada i llanterna que s'encén de nit.
+// `s` l'escala: els d'illot són una mica més grossos que els de punta de moll
+function far(G, x, y, z, k, s = 1){
   const col = hash3(k,160,2) < 0.5 ? C('#3f8f5a') : C('#c0453a');   // verd o vermell, com els de debò
-  con(G, x, z, 0.26, 0.24, y, y+0.12, 8, CARREU, true);
-  const N = 5, H = 1.25, yb = y + 0.12;
+  con(G, x, z, 0.26*s, 0.24*s, y, y+0.12*s, 8, CARREU, true);
+  const N = 5, H = 1.25*s, yb = y + 0.12*s;
   for(let i=0;i<N;i++){
     const y0 = yb + H*i/N, y1 = yb + H*(i+1)/N;
-    con(G, x, z, 0.17 - 0.05*i/N, 0.17 - 0.05*(i+1)/N, y0, y1, 8, i%2 ? MARC : col, false);
+    con(G, x, z, (0.17 - 0.05*i/N)*s, (0.17 - 0.05*(i+1)/N)*s, y0, y1, 8, i%2 ? MARC : col, false);
   }
   const yt = yb + H;
-  con(G, x, z, 0.2, 0.2, yt, yt+0.04, 8, FERRO, true);                  // balconada
-  for(let i=0;i<8;i++){                                                  // barana
+  con(G, x, z, 0.2*s, 0.2*s, yt, yt+0.04*s, 8, FERRO, true);              // balconada
+  for(let i=0;i<8;i++){                                                    // barana
     const a = i*Math.PI/4;
-    con(G, x + Math.cos(a)*0.18, z + Math.sin(a)*0.18, 0.008, 0.008, yt+0.04, yt+0.13, 4, FERRO, false);
+    con(G, x + Math.cos(a)*0.18*s, z + Math.sin(a)*0.18*s, 0.008, 0.008, yt+0.04*s, yt+0.13*s, 4, FERRO, false);
   }
-  tronc(GL, x, yt+0.04, z, x, yt+0.26, z, 0.09, 0.09, LLUM, 8);          // llanterna
-  con(G, x, z, 0.12, 0.12, yt+0.26, yt+0.29, 8, col, true);
-  con(G, x, z, 0.12, 0, yt+0.29, yt+0.40, 8, col, false);               // cúpula
-  LLUMS.push(x, yt+0.15, z);
+  tronc(GL, x, yt+0.04*s, z, x, yt+0.26*s, z, 0.09*s, 0.09*s, LLUM, 8);    // llanterna
+  con(G, x, z, 0.12*s, 0.12*s, yt+0.26*s, yt+0.29*s, 8, col, true);
+  con(G, x, z, 0.12*s, 0, yt+0.29*s, yt+0.40*s, 8, col, false);           // cúpula
+  LLUMS.push(x, yt+0.15*s, z);
+}
+
+// illot de roca per a un far posat sobre l'aigua: un monticle de vuit cares que
+// s'estreny cap amunt, amb un replà al cim i un parell de roques soltes a l'aigua
+const ILLOT_Y = 0.22;
+function illot(G, cel, ci){
+  const c = cel.c, vora = [];
+  for(let e=0;e<4;e++) vora.push(cel.p[e], entre(cel.p[e], cel.p[(e+1)%4], 0.5));
+  const anell = (f, j) => vora.map((p, i) => {
+    const k = f*(1 + (hash3(ci, i, 180+j) - 0.5)*0.18);
+    return {x: c.x + (p.x-c.x)*k, z: c.z + (p.z-c.z)*k};
+  });
+  const pisos = [[anell(0.98, 0), -0.6], [anell(0.8, 1), 0.07], [anell(0.6, 2), ILLOT_Y]];
+  for(let j=0;j<2;j++){
+    const [a, ya] = pisos[j], [b, yb] = pisos[j+1];
+    for(let i=0;i<8;i++){
+      const i2 = (i+1)%8, col = hash3(ci, i, 190+j) < 0.5 ? ROCA_A : ROCA_B;
+      quad(G, [a[i].x,ya,a[i].z], [a[i2].x,ya,a[i2].z], [b[i2].x,yb,b[i2].z], [b[i].x,yb,b[i].z], j ? clar(col, 1.08) : col);
+    }
+  }
+  const t = pisos[2][0];
+  for(let i=0;i<8;i++){
+    const i2 = (i+1)%8;
+    tri(G, [c.x,ILLOT_Y+0.015,c.z], [t[i].x,ILLOT_Y,t[i].z], [t[i2].x,ILLOT_Y,t[i2].z], clar(ROCA_A, 1.12));
+  }
+  for(let r=0;r<2;r++){                                   // roques soltes arran d'aigua
+    const i = Math.floor(hash3(ci, r, 195)*8), p = entre(c, vora[i], 0.9);
+    bola(G, p.x, -0.08, p.z, 0.13 + 0.06*hash3(ci, r, 196), 0.2, r ? ROCA_B : ROCA_A, ci*31 + r, 6);
+  }
+  far(G, c.x, ILLOT_Y, c.z, ci, 1.15);
 }
 
 // on van les barques amarrades: a l'aigua del costat dels molls. Una barca fa més d'una

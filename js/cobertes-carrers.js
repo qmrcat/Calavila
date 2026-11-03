@@ -97,13 +97,13 @@ function cobertes(G){
   const n = cells.length;
   const vista = new Array(n).fill(false);
   for(let ci=0; ci<n; ci++){
-    if(heff[ci] <= 0 || vista[ci]) continue;
+    if(heff[ci] <= 0 || vista[ci] || escalaE[ci] >= 0) continue;   // una escala a sobre fa de coberta
     const h = heff[ci], pila = [ci], membres = [ci];
     vista[ci] = true;
     while(pila.length){
       const a = pila.pop();
       for(const b of cells[a].nb){
-        if(b >= 0 && !vista[b] && heff[b] === h){ vista[b] = true; pila.push(b); membres.push(b); }
+        if(b >= 0 && !vista[b] && heff[b] === h && escalaE[b] < 0){ vista[b] = true; pila.push(b); membres.push(b); }
       }
     }
     // L'estil de la coberta (teula o terrat, color, xemeneia) surt d'una casa del mateix
@@ -167,7 +167,8 @@ function ferCoberta(G, llista, h, clau){
   const torre = llista.length === 1 ? tipusTorre[llista[0]] : null;
   if(torre === 'guaita'){ merlets(G, llista[0], y); return; }
 
-  if(!torre && hash3(clau, 9, 2) < 0.24){      // terrat comú
+  // terrat comú: a l'atzar, o perquè hi arrenca o hi arriba una escala
+  if(llista.some(m => terratForcat[m]) || (!torre && hash3(clau, 9, 2) < 0.24)){
     for(const ci of llista){
       const col = colorParet(ci);              // l'ampit de cada casa, del color de la seva façana
       const vi = cells[ci].vi, P = vi.map(v => pos.get(v));
@@ -175,6 +176,7 @@ function ferCoberta(G, llista, h, clau){
       const top = y + 0.20;
       for(let e=0;e<4;e++){
         if(!vora_(ci,e)) continue;
+        if(nivellVora(cells[ci].nb[e], ci) === h) continue;   // on hi toca una escala o un carrer al nivell del terrat, s'hi passa
         const A = P[e], B = P[(e+1)%4];
         const da = dirs.get(vi[e]), db = dirs.get(vi[(e+1)%4]);
         const ai = {x:A.x - da.x*0.20, z:A.z - da.z*0.20};
@@ -227,19 +229,89 @@ function ferCoberta(G, llista, h, clau){
 /* ============================================================
    CARRERS A DIFERENTS NIVELLS I ESCALES
    ------------------------------------------------------------
-   Cada cel·la de carrer té un nivell enter. L'alçada d'un
-   VÈRTEX és el màxim dels nivells dels carrers que hi toquen;
-   així la cel·la alta queda plana i és la baixa la que absorbeix
-   el desnivell i es converteix en escala. No cal marcar res:
-   la cel·la diagonal apareix sola on hi ha canvi de nivell.
+   Cada cel·la de carrer té un nivell enter i és plana. Les
+   escales es posen a mà, en mode Escales: escales[ci] diu cap
+   a quina aresta puja (aresta + 1; 0 si no n'hi ha). Una
+   escala puja sempre UN sol nivell, de L a L+1, i ha d'arrencar
+   d'un lloc pla al nivell L: un carrer, un pont, el terrat
+   d'una casa o el capdamunt d'una altra escala (així es fan
+   trams seguits fins a un pla tan alt com calgui). A dalt no
+   cal que hi hagi res: s'hi pot fer el carrer després.
+   Una escala pot anar en un carrer (o en el buit del costat
+   d'un lloc pla, que es torna carrer) o a sobre d'una casa:
+   llavors arrenca del seu terrat. Les cases d'on arrenca o a
+   on arriba una escala tenen terrat, no teulada.
    ============================================================ */
 
-const NIV_MAX = 4;
+const NIV_MAX = 12;   // el nivell més alt d'un carrer (les escales pugen per sobre de les cases)
 
-function alcadaVertex(v){
-  let m = 0;
-  for(const c of fans.get(v)) if(esCarrer[c] || heights[c] > 0) m = Math.max(m, nivEf[c]);
-  return m;
+// on hi ha escala: analitzar() en deixa el resultat a escalaE (l'aresta que puja, o -1),
+// a nvC (el nivell de cada cantó de cada carrer o escala) i a terratForcat
+function calculaEscales(){
+  const n = cells.length;
+  escalaE = new Array(n).fill(-1);
+  nvC = new Array(n).fill(null);
+  terratForcat = new Array(n).fill(false);
+  for(let ci=0; ci<n; ci++){
+    const casa = heights[ci] > 0 && !span[ci];
+    if(!esCarrer[ci] && !casa) continue;
+    const L = casa ? heff[ci] : nivEf[ci];       // sobre una casa, l'escala arrenca del terrat
+    if(!casa) nvC[ci] = [L,L,L,L];
+    if(!escales[ci] || span[ci]) continue;        // sota una volta, el carrer és pla
+    const e = escales[ci] - 1;
+    escalaE[ci] = e;
+    nvC[ci] = [L,L,L,L];
+    nvC[ci][e] = L + 1; nvC[ci][(e+1)%4] = L + 1;
+  }
+  // les cases d'on arrenca o a on arriba una escala, amb terrat
+  for(let ci=0; ci<n; ci++){
+    const e = escalaE[ci]; if(e < 0) continue;
+    const L = Math.min(...nvC[ci]), baix = cells[ci].nb[(e+2)%4], dalt = cells[ci].nb[e];
+    if(esTerrat(baix) && heff[baix] === L) terratForcat[baix] = true;
+    if(esTerrat(dalt) && heff[dalt] === L + 1) terratForcat[dalt] = true;
+  }
+}
+
+// una casa sense escala a sobre: el seu terrat pot ser terreny pla
+const esTerrat = b => b >= 0 && heights[b] > 0 && !span[b] && escalaE[b] < 0;
+
+// A quin nivell es pot caminar per la vora que la cel·la v comparteix amb ci, o null si no és plana:
+// un carrer, un pont, el terrat d'una casa o el cap d'una escala (dalt o baix, no pels costats)
+function nivellVora(v, ci){
+  if(v < 0) return null;
+  if(esTerrat(v)) return heff[v];
+  if(pont[v] > 0) return 0;
+  if(!nvC[v] || esMunt(v)) return null;           // per la roca no s'hi camina
+  const j = cells[v].nb.indexOf(ci);
+  if(j < 0) return null;
+  return nvC[v][j] === nvC[v][(j+1)%4] ? nvC[v][j] : null;
+}
+
+// terreny pla de nivell L a la cel·la b: un carrer que no és escala, o un pont (a nivell zero)
+const esPla = (b, L) => b >= 0 && ((esCarrer[b] && escalaE[b] < 0 && !esMunt(b) && nivEf[b] === L) || (L === 0 && pont[b] > 0));
+
+// Cap a on pot pujar una escala posada a ci: [{e, L, porta}], l'aresta que puja, el nivell de
+// baix i si a dalt ja hi troba on arribar. Ha d'arrencar d'una vora plana; si ci ja és carrer
+// o casa, al seu mateix nivell. Primer van les que ja porten a algun lloc, i després les més baixes
+function sentitsEscala(ci){
+  if(ci < 0 || pont[ci] || span[ci] || forcat[ci]) return [];
+  const casa = heights[ci] > 0;
+  const propi = casa ? heff[ci] : esCarrer[ci] ? nivEf[ci] : null;
+  const nb = cells[ci].nb, out = [];
+  for(let b=0;b<4;b++){
+    const L = nivellVora(nb[b], ci);
+    if(L === null || (propi !== null && L !== propi) || L > NIV_MAX) continue;
+    const e = (b + 2) % 4;
+    out.push({e, L, porta: nivellVora(nb[e], ci) === L + 1});
+  }
+  return out.sort((a, b) => (b.porta - a.porta) || (a.L - b.L) || (a.e - b.e));
+}
+
+// nivell del carrer b a l'aresta que comparteix amb la cel·la ci (el més baix dels dos cantons)
+function nivellAresta(b, ci){
+  if(b < 0 || !nvC[b]) return 0;
+  const j = cells[b].nb.indexOf(ci);
+  return j < 0 ? nivEf[b] : Math.min(nvC[b][j], nvC[b][(j+1)%4]);
 }
 
 function llambordes(G, bl, ci, y){
@@ -251,51 +323,97 @@ function llambordes(G, bl, ci, y){
   }
 }
 
-function escala(G, bl, eix, y0, y1, ci){
-  const dif = y1 - y0;
-  const n = Math.max(2, Math.min(14, Math.round(Math.abs(dif)/0.16)));
-  const flip = eix === 1;
-  const B = flip ? ((s,t)=>bl(t,s)) : ((s,t)=>bl(s,t));
-  const rev = (dif > 0) !== flip;
-  for(let k=0;k<n;k++){
-    const s0 = k/n, s1 = (k+1)/n;
-    const ya = y0 + dif*k/n, yb = y0 + dif*(k+1)/n;
-    const col = LLOSA[(k + ci) % LLOSA.length];
-    const c0 = B(s0,0), c1 = B(s1,0), c2 = B(s1,1), c3 = B(s0,1);
-    if(flip) quad(G, [c3.x,yb,c3.z], [c2.x,yb,c2.z], [c1.x,yb,c1.z], [c0.x,yb,c0.z], col);
-    else     quad(G, [c0.x,yb,c0.z], [c1.x,yb,c1.z], [c2.x,yb,c2.z], [c3.x,yb,c3.z], col);
-    const a = B(s0,0), b = B(s0,1);            // contrapetja
-    const lo = Math.min(ya,yb), hi = Math.max(ya,yb);
-    if(rev) quad(G, [b.x,lo,b.z], [a.x,lo,a.z], [a.x,hi,a.z], [b.x,hi,b.z], LLOSA[0]);
-    else    quad(G, [a.x,lo,a.z], [b.x,lo,b.z], [b.x,hi,b.z], [a.x,hi,a.z], LLOSA[0]);
-  }
+// quad orientat: gira l'ordre dels vèrtexs si cal perquè la cara miri cap a nd
+function cara(G, a, b, c, d, col, nd){
+  const ux=b[0]-a[0], uy=b[1]-a[1], uz=b[2]-a[2], vx=c[0]-a[0], vy=c[1]-a[1], vz=c[2]-a[2];
+  const nx = uy*vz-uz*vy, ny = uz*vx-ux*vz, nz = ux*vy-uy*vx;
+  if(nx*nd[0] + ny*nd[1] + nz*nd[2] < 0) quad(G, d, c, b, a, col);
+  else quad(G, a, b, c, d, col);
 }
 
-function rampa(G, bl, Y, ci){                  // desnivell en diagonal: pendent suau
-  const hy = (u,v) => { const a = Y[0]+(Y[1]-Y[0])*u, b = Y[3]+(Y[2]-Y[3])*u; return a+(b-a)*v; };
-  const M = 4;
-  for(let i=0;i<M;i++) for(let j=0;j<M;j++){
-    const u0=i/M, u1=(i+1)/M, v0=j/M, v1=(j+1)/M;
-    const c0=bl(u0,v0), c1=bl(u1,v0), c2=bl(u1,v1), c3=bl(u0,v1);
-    quad(G, [c0.x,hy(u0,v0),c0.z], [c1.x,hy(u1,v0),c1.z],
-            [c2.x,hy(u1,v1),c2.z], [c3.x,hy(u0,v1),c3.z],
-         LLOSA[Math.floor(hash3(ci,i,j+30)*LLOSA.length)]);
+const CALC_ESC = C('#f2ece0');   // muret emblanquinat de les escales
+const CAP_ESC  = C('#d6cab3');   // l'albardilla de pedra que el corona
+
+// Escala d'un tram, de la vora baixa (aresta e+2, alçada y0) a l'alta (aresta e, y1).
+// Graons de pedra amb el nas que sobresurt i la contrapetja a l'ombra; on el costat
+// dona a un lloc més baix, un muret emblanquinat amb albardilla; arran de casa,
+// algun test als graons
+function escala(G, cel, ci, e, y0, y1){
+  const q = k => cel.p[(e+k)%4], nb = k => cel.nb[(e+k)%4];
+  // s: de baix (0) a dalt (1); t: de l'aresta e+3 (0) a la e+1 (1)
+  const P = (s, t) => entre(entre(q(3), q(0), s), entre(q(2), q(1), s), t);
+  const V = (s, t, y) => { const a = P(s, t); return [a.x, y, a.z]; };
+  const dir = (a, b) => [b.x-a.x, 0, b.z-a.z];
+  const dS = dir(P(0,.5), P(1,.5)), dT = dir(P(.5,0), P(.5,1));
+  const neg = v => [-v[0], -v[1], -v[2]], AMUNT = [0,1,0], AVALL = [0,-1,0];
+
+  // muret als costats que donen a un lloc més baix (no a una casa ni a un carrer més alt)
+  const costat = k => {
+    const b = nb(k), t = solTop(b);
+    if(t >= y1 - 0.15) return b >= 0 && heff[b] > 0 && !span[b] ? 'casa' : 'res';   // el veí fa de paret
+    return 'mur';
+  };
+  const c0 = costat(3), c1 = costat(1);
+  const MW = 0.1, HP = 0.24;
+  const ta = c0 === 'mur' ? MW : 0, tb = c1 === 'mur' ? 1 - MW : 1;
+
+  const n = Math.max(3, Math.round((y1 - y0)/0.15)), dy = (y1 - y0)/n;
+  const NAS = 0.022, GR = 0.03;                  // el nas: quant sobresurt i quin gruix fa
+  for(let k=0;k<n;k++){
+    const s0 = k/n, s1 = (k+1)/n, sn = s0 - NAS, ya = y0 + k*dy, yb = ya + dy;
+    const pedra = LLOSA[Math.floor(hash3(ci, k, 77)*LLOSA.length)];
+    cara(G, V(s0,ta,ya), V(s0,tb,ya), V(s0,tb,yb-GR), V(s0,ta,yb-GR), fosc(pedra, 0.7), neg(dS));     // contrapetja
+    cara(G, V(sn,ta,yb-GR), V(s0,ta,yb-GR), V(s0,tb,yb-GR), V(sn,tb,yb-GR), fosc(pedra, 0.6), AVALL); // sota el nas
+    cara(G, V(sn,ta,yb-GR), V(sn,tb,yb-GR), V(sn,tb,yb), V(sn,ta,yb), clar(pedra, 1.12), neg(dS));    // cantell
+    const sm = s0 + (s1 - s0)*0.22;              // franja clara del nas i la resta de la petja
+    cara(G, V(sn,ta,yb), V(sn,tb,yb), V(sm,tb,yb), V(sm,ta,yb), clar(pedra, 1.1), AMUNT);
+    cara(G, V(sm,ta,yb), V(sm,tb,yb), V(s1,tb,yb), V(s1,ta,yb), pedra, AMUNT);
+    // a tocar de casa, de tant en tant un test al graó
+    for(const [cst, t, i] of [[c0, 0.13, 0], [c1, 0.87, 1]])
+      if(cst === 'casa' && k < n-1 && hash3(ci, k*2 + i, 78) < 0.28){
+        const a = P((k + 0.6)/n, t);
+        test(G, a.x, yb, a.z, ci*13 + k, 0.62);
+      }
+  }
+
+  // murets
+  const top = s => y0 + (y1 - y0)*s + HP;
+  for(const [cst, tOut, tIn] of [[c0, 0, MW], [c1, 1, 1 - MW]]){
+    if(cst !== 'mur') continue;
+    const fora = tOut === 0 ? neg(dT) : dT, dins = neg(fora);
+    cara(G, V(0,tOut,y0), V(1,tOut,y1), V(1,tOut,top(1)), V(0,tOut,top(0)), CALC_ESC, fora);
+    for(let k=0;k<n;k++){                        // la cara de dins arrenca de cada graó
+      const s0 = k/n, s1 = (k+1)/n, yb = y0 + (k+1)*dy;
+      cara(G, V(s0,tIn,yb), V(s1,tIn,yb), V(s1,tIn,top(s1)), V(s0,tIn,top(s0)), fosc(CALC_ESC, 0.94), dins);
+    }
+    cara(G, V(0,tOut,y0), V(0,tIn,y0), V(0,tIn,top(0)), V(0,tOut,top(0)), CALC_ESC, neg(dS));
+    cara(G, V(1,tOut,y1), V(1,tIn,y1), V(1,tIn,top(1)), V(1,tOut,top(1)), CALC_ESC, dS);
+    // albardilla: una llosa una mica més ampla que el mur
+    const o = 0.025, A = tOut === 0 ? -o : 1 + o, B = tOut === 0 ? MW + o : 1 - MW - o, g = 0.035;
+    const fosca = fosc(CAP_ESC, 0.88);
+    cara(G, V(-o,A,top(-o)+g), V(1+o,A,top(1+o)+g), V(1+o,B,top(1+o)+g), V(-o,B,top(-o)+g), CAP_ESC, AMUNT);
+    for(const [t, nd] of [[A, fora], [B, dins]])
+      cara(G, V(-o,t,top(-o)), V(1+o,t,top(1+o)), V(1+o,t,top(1+o)+g), V(-o,t,top(-o)+g), fosca, nd);
+    cara(G, V(-o,A,top(-o)), V(-o,B,top(-o)), V(-o,B,top(-o)+g), V(-o,A,top(-o)+g), fosca, neg(dS));
+    cara(G, V(1+o,A,top(1+o)), V(1+o,B,top(1+o)), V(1+o,B,top(1+o)+g), V(1+o,A,top(1+o)+g), fosca, dS);
+    // un test a l'arrencada del muret, a vegades
+    if(hash3(ci, tOut, 79) < 0.5){
+      const a = P(0.05, (A + B)/2);
+      test(G, a.x, top(0.05) + g, a.z, ci*7 + tOut, 0.7);
+    }
   }
 }
 
 function paviment(G, cel, ci){
   const p = cel.p;
-  const Y = cel.vi.map(v => nvV.get(v)*ALT + CARRER_Y);
-  const bl = (u,v) => entre(entre(p[0],p[1],u), entre(p[3],p[2],u), v);
-  const ig = (a,b) => Math.abs(a-b) < 1e-6;
-
-  if(ig(Y[0],Y[1]) && ig(Y[1],Y[2]) && ig(Y[2],Y[3])){
+  const Y = nvC[ci].map(l => l*ALT + CARRER_Y);
+  const e = escalaE[ci];
+  if(e < 0){
+    const bl = (u,v) => entre(entre(p[0],p[1],u), entre(p[3],p[2],u), v);
     llambordes(G, bl, ci, Y[0]);
     return {y: Y[0], pla: true};
   }
-  if(ig(Y[0],Y[3]) && ig(Y[1],Y[2]))      escala(G, bl, 0, Y[0], Y[1], ci);
-  else if(ig(Y[0],Y[1]) && ig(Y[3],Y[2])) escala(G, bl, 1, Y[0], Y[3], ci);
-  else                                    rampa(G, bl, Y, ci);
+  escala(G, cel, ci, e, Y[(e+2)%4], Y[e]);
   return {y: (Y[0]+Y[1]+Y[2]+Y[3])/4, pla: false};
 }
 

@@ -246,8 +246,9 @@ function paret(G, A, B, y0, y1, col, ci, L, e, plantaBaixa, donaCarrer, especial
 }
 
 /* --- vegetació: xiprer, pi pinyoner i olivera --- */
-function arbre(G, x, y, z, alt, k){
-  const t = hash3(k, 5, 17), ll = (k*2654435761) | 0;
+// t tria l'espècie (per defecte, a l'atzar): < 0.34 xiprer, < 0.67 pi, i si no, olivera
+function arbre(G, x, y, z, alt, k, t = hash3(k, 5, 17)){
+  const ll = (k*2654435761) | 0;
   if(t < 0.34){                                   // xiprer: un fus alt i estret
     con(G, x, z, 0.035, 0.03, y, y+alt*0.1, 5, ESCORCA, false);
     const r = alt*0.16;

@@ -94,9 +94,11 @@ const PEDRA_PONT = C('#c8b596'), DOVELLA = C('#a8957a');
 
 // alçada del pas a la riba de l'aresta e: el carrer, el terra de la casa o, si no hi ha res, a ran
 function riba(ci, e){
-  const b = cells[ci].nb[e], vi = cells[ci].vi;
-  if(b >= 0 && esCarrer[b])
-    return Math.max(nvV.get(vi[e]) || 0, nvV.get(vi[(e+1)%4]) || 0)*ALT + CARRER_Y;
+  const b = cells[ci].nb[e];
+  if(b >= 0 && esCarrer[b]){
+    const j = cells[b].nb.indexOf(ci);
+    return Math.max(nvC[b][j], nvC[b][(j+1)%4])*ALT + CARRER_Y;
+  }
   if(b >= 0 && heff[b] > 0 && !span[b]) return base[b]*ALT + CARRER_Y;
   return CARRER_Y;
 }

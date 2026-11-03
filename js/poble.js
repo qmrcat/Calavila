@@ -5,10 +5,14 @@
 let cells = [], heights = [], carrer = [], nivell = [], forcat = [], tint = [], seed = 1234;
 let pont = [];   // 0 = cap; 1 = pont entre les arestes 0 i 2; 2 = entre l'1 i la 3
 let moll = [];   // 1 = aquest carrer és un moll de port
+let escales = []; // escala posada a mà: l'aresta cap on puja + 1 (0 = cap)
+let fars = [];   // 1 = un far posat a mà (sobre l'aigua fa un illot; sobre un carrer, hi va dret)
+let roca = [];   // 1 = el terreny d'aquesta cel·la és roca de muntanya, no paviment
 let mode = 'casa', colSel = -1, modeTreure = false;
 let townMesh = null, pickMesh = null, faceCell = null, hoverMesh = null;
 let fans = new Map(), posV = new Map(), vora = new Set();
-let heff = [], base = [], span = [], esCarrer = [], nivEf = [], nvV = new Map(), tipusTorre = [];
+let heff = [], base = [], span = [], esCarrer = [], nivEf = [], tipusTorre = [];
+let nvC = [], escalaE = [], terratForcat = [];   // nivell de cada cantó dels carrers; aresta per on puja l'escala (-1 si és pla)
 let llumMesh = null, finestraMesh = null, haloMesh = null;
 let esSorra = [], sorraDist = [], platjaA = 0;
 const PLATJA_AMPLE = 0.75;   // mitja obertura del tram de platja, en radians
@@ -55,7 +59,7 @@ function analitzar(){
   for(let ci=0; ci<n; ci++){
     if(heights[ci] > 0 || pont[ci]) continue;
     // soles, les voltes només es fan sobre carrers: així els canals queden oberts
-    if(!forcat[ci] && !esCarrer[ci]) continue;
+    if(!forcat[ci] && (!esCarrer[ci] || roca[ci])) continue;   // ni sobre la roca
     const nb = cells[ci].nb.map(v => v >= 0 ? heights[v] : 0);
     let L = Infinity;
     for(let e=0;e<2;e++){
@@ -89,7 +93,7 @@ function analitzar(){
   // torres: cel·les altes i soles, amb tots els veïns com a mínim dos pisos més baixos
   tipusTorre = new Array(n).fill(null);
   for(let ci=0; ci<n; ci++){
-    if(heights[ci] <= 0 || heff[ci] < 4) continue;
+    if(heights[ci] <= 0 || heff[ci] < 4 || escales[ci]) continue;   // amb una escala a sobre no és torre
     if(cells[ci].nb.every(b => b < 0 || heff[b] <= heff[ci] - 2))
       tipusTorre[ci] = hash3(ci,31,7) < 0.5 ? 'campanar' : 'guaita';
   }
@@ -105,17 +109,14 @@ function analitzar(){
     for(const b of cells[a].nb) if(b >= 0 && sorraDist[b] < 0){ sorraDist[b] = sorraDist[a] + 1; cua.push(b); }
   }
   for(let ci=0; ci<n; ci++){
-    if(sorraDist[ci] < 1 || pont[ci] || esCanal(ci)) continue;   // els canals no s'omplen d'arena
+    if(sorraDist[ci] < 1 || pont[ci] || fars[ci] || esCanal(ci)) continue;   // ni els canals ni els illots s'omplen d'arena
     const c = cells[ci].c;
     const da = Math.abs((((Math.atan2(c.z, c.x) - platjaA) % 6.283) + 9.425) % 6.283 - 3.1416);
     if(da < PLATJA_AMPLE) esSorra[ci] = true;
   }
 
-  nvV = new Map();
-  for(let ci=0; ci<n; ci++){
-    if(!esCarrer[ci]) continue;
-    for(const v of cells[ci].vi) if(!nvV.has(v)) nvV.set(v, alcadaVertex(v));
-  }
+  calculaEscales();
+  calculaMuntanya();
 }
 
 const ocupat = (ci,L) => ci >= 0 && !(span[ci] && L === 0) && L >= base[ci] && L < heff[ci];
@@ -138,6 +139,18 @@ function eixPont(ci){
   if(a !== b) return a > b ? 1 : 2;
   return 1;
 }
+/* --- fars posats a mà --- */
+// un far sobre l'aigua, sense carrer ni casa: s'aguanta damunt d'un illot de roca
+const esIllot = ci => fars[ci] > 0 && heights[ci] === 0 && !esCarrer[ci] && !pont[ci];
+// un carrer és pla si no és una escala
+const carrerPla = ci => escalaE[ci] < 0;
+// es pot posar un far aquí? a l'aigua, o en un carrer, una plaça o un moll plans i sense volta
+function potFar(ci){
+  if(heights[ci] > 0 || pont[ci] || span[ci]) return false;
+  return !esCarrer[ci] || carrerPla(ci);
+}
+// es pot fer roca aquí (o alçar la que hi ha)? no sota una casa, un pont ni una volta
+const potRoca = ci => heights[ci] === 0 && !pont[ci] && !span[ci] && !forcat[ci] && !(roca[ci] && carrer[ci] && nivell[ci] >= NIV_MAX);
 // per fer volta cal la cel·la buida i dues cases de 2+ pisos EN ARESTES OPOSADES
 function potVolta(ci){
   if(heights[ci] > 0) return false;
@@ -149,10 +162,9 @@ function potVolta(ci){
 function solTop(ci){
   if(ci < 0 || span[ci]) return -ROCA;
   if(heff[ci] > 0) return heff[ci]*ALT;
+  if(muntSup[ci]) return baixMunt(ci);
   if(esCarrer[ci]){
-    let m = Infinity;
-    for(const v of cells[ci].vi) m = Math.min(m, nvV.get(v) || 0);
-    return m*ALT + CARRER_Y;
+    return Math.min(...nvC[ci])*ALT + CARRER_Y;
   }
   return -ROCA;
 }
@@ -165,13 +177,13 @@ function colorParet(ci){
 }
 
 function alturaTop(ci){
-  if(heff[ci] > 0) return heff[ci]*ALT;
+  if(heff[ci] > 0) return (heff[ci] + (escalaE[ci] >= 0 ? 1 : 0))*ALT;
+  if(muntSup[ci]) return altMunt(ci);
   if(esCarrer[ci]){
-    let m = 0;
-    for(const v of cells[ci].vi) m = Math.max(m, nvV.get(v) || 0);
-    return m*ALT + CARRER_Y;
+    return Math.max(...nvC[ci])*ALT + CARRER_Y;
   }
   if(pont[ci]) return 0.3;
+  if(esIllot(ci)) return ILLOT_Y;
   return esSorra[ci] ? 0.06 : 0.04;
 }
 
@@ -186,6 +198,7 @@ function construirMalla(){
     const h = heff[ci];
     const via = esCarrer[ci];
     if(pont[ci]){ pontG(G, cel, ci); continue; }
+    if(esIllot(ci)){ illot(G, cel, ci); continue; }
     if(esSorra[ci]){ sorra(G, cel, ci); continue; }
     if(h <= 0 && !via) continue;
 
@@ -193,9 +206,12 @@ function construirMalla(){
 
     // carrer (també sota les voltes)
     let sup = null;
-    if(via){
+    const munt = !!muntSup[ci];
+    if(munt) muntanya(G, cel, ci);                // roca: relleu, vegetació i, si n'hi ha, el far
+    else if(via){
       sup = paviment(G, cel, ci);
       if(!sup.pla) nEsc++;
+      else if(fars[ci] && !span[ci]) far(G, cel.c.x, sup.y, cel.c.z, ci);   // el far posat a mà, al lloc dels estris
       else if(!moll[ci]) mobiliari(G, cel, ci, sup.y, span[ci]);   // a les escales no hi va res
       else if(esPuntaMoll(ci) && !span[ci] && hash3(ci,160,1) < 0.7) far(G, cel.c.x, sup.y, cel.c.z, ci);
       else mobiliariMoll(G, cel, ci, sup.y);
@@ -205,9 +221,10 @@ function construirMalla(){
     if(!span[ci]){
       const baix = expand(cel.p, cel.c, 1.10);
       // el terra d'aquesta cel·la: pla si és casa, per vèrtexs si és carrer
-      const topV = k => (h <= 0 && via) ? nvV.get(cel.vi[k])*ALT + CARRER_Y : base[ci]*ALT;
+      const topV = k => munt ? cantoMunt(ci, k) : (h <= 0 && via) ? nvC[ci][k]*ALT + CARRER_Y : base[ci]*ALT;
       for(let e=0;e<4;e++){
         const f = (e+1)%4;
+        if(munt && esMunt(cel.nb[e])) continue;        // dues roques fan un sol pendent
         const sota = solTop(cel.nb[e]);
         const tA = topV(e), tB = topV(f);
         if(sota >= Math.max(tA, tB) - 1e-6) continue;   // el veí ja tapa aquesta cara
@@ -215,8 +232,9 @@ function construirMalla(){
         const A = cel.p[e], B = cel.p[f];
         if(mar && moll[ci]){ paretMoll(G, A, B, tA, tB, ci, e, cel.c); continue; }   // al port, carreus
         const a = mar ? baix[e] : A, b = mar ? baix[f] : B;
-        const roca = hash3(ci,e,11) < 0.5 ? ROCA_A : ROCA_B;
-        quad(G, [a.x,sota,a.z], [b.x,sota,b.z], [B.x,tB,B.z], [A.x,tA,A.z], roca);
+        if(munt){ cingle(G, a, b, A, B, sota, tA, tB, ci, e); continue; }
+        const pedra = hash3(ci,e,11) < 0.5 ? ROCA_A : ROCA_B;
+        quad(G, [a.x,Math.min(sota,tA),a.z], [b.x,Math.min(sota,tB),b.z], [B.x,tB,B.z], [A.x,tA,A.z], pedra);
       }
     }
     if(h <= 0) continue;
@@ -234,8 +252,8 @@ function construirMalla(){
         const S = rodo[e] ? curva[e][ARR_K] : cel.p[e];
         const T = rodo[(e+1)%4] ? curva[(e+1)%4][0] : cel.p[(e+1)%4];
         const nb = cel.nb[e];
-        const viaVei = nb >= 0 && (esCarrer[nb] || pont[nb] > 0);   // un pont també és carrer
-        const lv = viaVei ? (nvV.get(cel.vi[e]) || 0) : 0;
+        const viaVei = nb >= 0 && ((esCarrer[nb] && !esMunt(nb)) || pont[nb] > 0);   // un pont també és carrer; la roca, no
+        const lv = viaVei ? nivellAresta(nb, ci) : 0;
         const especial = torre === 'campanar' ? (L === h-1 ? 'campanar' : null) : torre;
         paret(G, S, T, y0, y1, col, ci, L, e, L === (viaVei ? lv : base[ci]), viaVei, especial);
       }
@@ -268,6 +286,20 @@ function construirMalla(){
           tapaCanto(G, cel.p[i], curva[i], y1, false, col);   // sota la teulada
         }
       }
+    }
+
+    // escala a sobre de la casa: arrenca del terrat i puja un nivell
+    if(escalaE[ci] >= 0){
+      const y0 = h*ALT;
+      for(let k=0;k<4;k++){                     // on el veí és més baix, la façana puja fins als graons
+        const tA = nvC[ci][k]*ALT, tB = nvC[ci][(k+1)%4]*ALT;
+        const sota = Math.max(y0, solTop(cel.nb[k]));
+        if(sota >= Math.max(tA, tB) - 1e-6) continue;
+        const A = cel.p[k], B = cel.p[(k+1)%4];
+        quad(G, [A.x,sota,A.z], [B.x,sota,B.z], [B.x,Math.max(sota,tB),B.z], [A.x,Math.max(sota,tA),A.z], col);
+      }
+      escala(G, cel, ci, escalaE[ci], y0, y0 + ALT);
+      nEsc++;
     }
   }
 
@@ -324,7 +356,7 @@ function construirMalla(){
 function construirGrid(){
   const pos = [], vistes = new Set(), y = 0.012;
   for(let ci=0; ci<cells.length; ci++){
-    if(heff[ci] > 0 || esCarrer[ci] || esSorra[ci] || pont[ci]) continue;   // només on encara hi ha mar
+    if(heff[ci] > 0 || esCarrer[ci] || esSorra[ci] || pont[ci] || fars[ci]) continue;   // només on encara hi ha mar
     const c = cells[ci];
     for(let e=0;e<4;e++){
       const a = c.vi[e], b = c.vi[(e+1)%4];
@@ -356,13 +388,16 @@ function novaCala(s, mida = midaCala){
   forcat  = new Array(cells.length).fill(false);
   pont    = new Array(cells.length).fill(0);
   moll    = new Array(cells.length).fill(0);
+  fars    = new Array(cells.length).fill(0);
+  escales  = new Array(cells.length).fill(0);
+  roca    = new Array(cells.length).fill(0);
   tint    = new Array(cells.length).fill(-1);   // -1 = automàtic
 }
 
 // la llavor del poble va a part de la de la cala: `seed` ha de ser sempre
 // la que ha fet la quadrícula, perquè és la que es desa a la partida
 function generarPoble(llavor = seed + 991){
-  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0);
+  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0);
   const rnd = mulberry32(llavor);
   let inici = 0, millor = Infinity;
   cells.forEach((c,i)=>{ const d = Math.hypot(c.c.x, c.c.z); if(d < millor){ millor = d; inici = i; } });
@@ -408,16 +443,69 @@ function generarPoble(llavor = seed + 991){
   for(let i=0;i<cells.length;i++)
     if(carrer[i] && !cells[i].nb.some(v => v >= 0 && heights[v] > 0)) carrer[i] = false;
 
-  // 3) una placeta enlairada: les cel·les del voltant es tornen escales soles
+  // 3) una placeta enlairada, amb una escala per on s'hi puja. Es busca un tram recte
+  // de carrer O-S-P: P s'enlaira (i la placeta creix a partir d'aquí), S es torna l'escala
+  // i O, que es queda pla a baix, és per on s'hi arriba
   const vies = [];
   carrer.forEach((v,i)=>{ if(v) vies.push(i); });
   if(vies.length > 8){
-    const q = [vies[Math.floor(rnd()*vies.length)]], vist2 = new Set(q);
-    let m = 3 + Math.floor(rnd()*4);
-    while(q.length && m > 0){
-      const a = q.shift(); nivell[a] = 1; m--;
-      for(const b of cells[a].nb)
-        if(b >= 0 && carrer[b] && !vist2.has(b)){ vist2.add(b); q.push(b); }
+    const trams = [];
+    for(const s of vies) for(let e=0;e<2;e++){
+      const a = cells[s].nb[e], b = cells[s].nb[e+2];
+      if(a >= 0 && b >= 0 && carrer[a] && carrer[b]) trams.push([a, s, b], [b, s, a]);
     }
+    // una volta al costat deixaria el carrer a nivell zero: es proven uns quants trams
+    // i es queda el primer on l'escala surt de debò
+    const m0 = 3 + Math.floor(rnd()*4);
+    for(let intent=0; intent<10 && trams.length; intent++){
+      const [O, S, P] = trams.splice(Math.floor(rnd()*trams.length), 1)[0];
+      const fora = new Set([O, S, ...cells[O].nb]);     // ni l'escala ni el replà de baix no s'enlairen
+      const q = [P], vist2 = new Set(q), alcats = [];
+      let m = m0;
+      while(q.length && m > 0){
+        const a = q.shift(); nivell[a] = 1; alcats.push(a); m--;
+        for(const b of cells[a].nb)
+          if(b >= 0 && carrer[b] && !vist2.has(b) && !fora.has(b)){ vist2.add(b); q.push(b); }
+      }
+      escales[S] = cells[S].nb.indexOf(P) + 1;          // l'escala, de S cap a P
+      analitzar();
+      if(escalaE[S] >= 0 && nivEf[P] === 1 && nivEf[O] === 0) break;
+      for(const a of alcats) nivell[a] = 0;
+      escales[S] = 0;
+    }
+  }
+
+  // 4) com les fetes a mà, les cases s'aixequen sobre terreny: si es treuen pis a pis, hi queda
+  for(let i=0;i<cells.length;i++) if(heights[i] > 0) carrer[i] = true;
+
+  // 5) un turó de roca a tocar del poble, a l'altra banda de la platja, amb un mas al cim
+  // de vegades. Creix sobre l'aigua, sense tocar cap casa ni cap carrer, i com més endins, més alt
+  const aigua = i => i >= 0 && !heights[i] && !carrer[i] && !vora.has(cells[i].vi[0])
+                  && cells[i].nb.filter(b => b >= 0 && heights[b] > 0).length < 2;   // no es menja cap plaça
+  const llavors = [];
+  for(let i=0;i<cells.length;i++)
+    if(aigua(i) && cells[i].nb.some(b => b >= 0 && carrer[b])) llavors.push(i);
+  if(llavors.length){
+    const lluny = i => { const c = cells[i].c; return Math.abs((((Math.atan2(c.z, c.x) - platjaA) % 6.283) + 9.425) % 6.283 - 3.1416); };
+    llavors.sort((a, b) => lluny(b) - lluny(a));
+    const t0 = llavors[Math.floor(rnd()*Math.min(4, llavors.length))];
+    const turo = [t0], dins = new Set(turo);
+    const mida = Math.round((14 + Math.floor(rnd()*10)) * k * k);
+    for(let i=0; i<turo.length && turo.length < mida; i++)
+      for(const b of shuffle(cells[turo[i]].nb.slice(), rnd))
+        if(aigua(b) && !dins.has(b) && rnd() < 0.75 && turo.length < mida){ dins.add(b); turo.push(b); }
+    // nivell: la distància a la vora del turó, fins a 3
+    const dist = new Map(), cua2 = [];
+    for(const a of turo) if(cells[a].nb.some(b => !dins.has(b))){ dist.set(a, 0); cua2.push(a); }
+    for(let i=0;i<cua2.length;i++)
+      for(const b of cells[cua2[i]].nb)
+        if(dins.has(b) && !dist.has(b)){ dist.set(b, dist.get(cua2[i]) + 1); cua2.push(b); }
+    let cim = t0;
+    for(const a of turo){
+      carrer[a] = true; roca[a] = 1;
+      nivell[a] = Math.min(3, dist.get(a) || 0);
+      if(nivell[a] > nivell[cim]) cim = a;
+    }
+    if(nivell[cim] > 0 && rnd() < 0.6) heights[cim] = 1 + Math.floor(rnd()*2);   // el mas
   }
 }
