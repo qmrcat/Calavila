@@ -54,8 +54,29 @@ const sc = sol.shadow.camera;
 sc.left = -24; sc.right = 24; sc.top = 24; sc.bottom = -24; sc.near = 1; sc.far = 70;
 scene.add(sol);
 
-// mar
-const marGeo = new THREE.PlaneGeometry(260, 260, 56, 56);
+// Fins on arriba la quadrícula, en unitats del món (20,5 a la mida normal).
+// La boira, les ombres, la llum i els límits de la càmera s'hi adapten.
+let radiCala = 20.5;
+const escalaVista = () => Math.max(1, radiCala / 20.5);
+// La boira comença una mica més enllà d'on mira la càmera: així el poble queda nítid
+// a qualsevol zoom i només s'esvaeix l'horitzó (a la mida normal i de prop, com sempre: 34-96)
+function ajustaBoira(){
+  const f = escalaVista(), d = camera.position.distanceTo(centre);
+  scene.fog.near = Math.max(34*f, d + 10);
+  scene.fog.far  = Math.max(96*f, d + 60*f);
+}
+function ajustaMida(){
+  radiCala = 0;
+  for(const v of posV.values()) radiCala = Math.max(radiCala, Math.hypot(v.x, v.z));
+  ajustaBoira();
+  const s = radiCala + 4;                         // la càmera d'ombres ha de veure tota la cala
+  sc.left = -s; sc.right = s; sc.top = s; sc.bottom = -s; sc.far = 2*(radiCala + 25);
+  sc.updateProjectionMatrix();
+  aplicaHora(hora);                               // torna a posar el sol a la distància nova
+}
+
+// mar: prou gran perquè no se li vegi la vora ni amb la cala gran i la càmera lluny
+const marGeo = new THREE.PlaneGeometry(400, 400, 86, 86);
 marGeo.rotateX(-Math.PI/2);
 const marBase = marGeo.attributes.position.array.slice();
 const mar = new THREE.Mesh(marGeo, new THREE.MeshPhongMaterial({
@@ -299,11 +320,11 @@ function aplicaHora(h){
   const sx = Math.cos(th)*22, sy = Math.sin(th)*20, sz = 9;
   dirLluna.set(-sx, -sy, -sz).normalize();
   if(e >= 0){
-    sol.position.set(sx, sy, sz);
+    sol.position.set(sx, sy, sz).setLength(radiCala + 25);   // sempre per fora de la cala
     sol.color.copy(LLUM_POSTA).lerp(LLUM_DIA, ss(0.05, 0.5, e));
     sol.intensity = 1.05 * ss(0, 0.3, e);
   } else {
-    sol.position.set(-sx, -sy, -sz);
+    sol.position.set(-sx, -sy, -sz).setLength(radiCala + 25);
     sol.color.copy(LLUM_LLUNA);
     sol.intensity = 0.34 * ss(0, 0.3, -e);
   }

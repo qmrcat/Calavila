@@ -20,7 +20,7 @@ function serialitza(){
   };
   return [MARCA, seed, n, autoPlaces ? 1 : 0,
           enc(heights,0), enc(carrer,0), enc(nivell,0), enc(forcat,0), enc(tint,1), enc(pont,0),
-          enc(moll,0)].join('|');
+          enc(moll,0), midaCala].join('|');
 }
 
 function deserialitza(txt){
@@ -28,9 +28,12 @@ function deserialitza(txt){
   if(p[0] !== MARCA) throw new Error('Això no sembla una partida de Cala.');
   const sd = +p[1], n = +p[2];
   if(p.length < 9 || !Number.isInteger(sd) || !Number.isInteger(n) || n < 1) throw new Error('Capçalera malmesa.');
-  // els camps dels ponts (10è) i dels molls (11è) són posteriors: les partides antigues no els tenen
+  // els camps dels ponts (10è), dels molls (11è) i de la mida (12è) són posteriors:
+  // les partides antigues no els tenen. Els onze primers tenen un caràcter per cel·la
   const nCamps = Math.min(p.length, 11);
   for(let k=4;k<nCamps;k++) if(p[k].length !== n) throw new Error('Les dades no quadren amb el nombre de cel·les.');
+  const mida = p.length >= 12 ? p[11] : 'normal';
+  if(!esMida(mida)) throw new Error('Mida de cala desconeguda.');
 
   // tot es valida abans de tocar l'estat: si falla, la partida actual queda intacta
   const dec = (t, off, max) => {
@@ -48,12 +51,12 @@ function deserialitza(txt){
   const mo = nCamps >= 11 ? dec(p[10], 0, 1) : new Array(n).fill(0);
 
   let noves = null;                                 // la cala és determinista
-  if(sd !== seed || cells.length !== n){
-    noves = construirCala(sd, MIDA_CALA);
+  if(sd !== seed || mida !== midaCala || cells.length !== n){
+    noves = construirCala(sd, MIDES[mida]);
     if(noves.length !== n) throw new Error('La cala reconstruïda no coincideix.');
   }
 
-  if(noves){ seed = sd; cells = noves; indexarGraella(); decorarCala(); }
+  if(noves){ seed = sd; midaCala = mida; cells = noves; indexarGraella(); decorarCala(); ajustaMida(); }
   heights = h;
   carrer  = ca.map(Boolean);
   nivell  = ni;
@@ -69,6 +72,7 @@ function sincronitzaBotons(){
   const b = document.getElementById('btn-places');
   b.classList.toggle('on', autoPlaces);
   b.setAttribute('aria-pressed', autoPlaces);
+  marcaMida();
 }
 
 /* --- magatzem: l'API de Claude si hi és, si no localStorage --- */
@@ -177,7 +181,7 @@ function importa(t){
     sincronitzaBotons();
     construirMalla();
     pila = []; cursor = -1; instantania();
-    centre.set(0,1.4,0); actualitzarCamera();
+    centre.set(0,1.4,0); dist = distInicial(); actualitzarCamera();
     obrePanell(false);
     avis('Partida carregada.');
   } catch(e){ avis('No s\'ha pogut carregar: ' + e.message); }

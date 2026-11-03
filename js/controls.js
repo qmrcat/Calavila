@@ -32,12 +32,14 @@ function marcarHover(ci){
 
 /* ---------- 7. Càmera orbital ---------- */
 
-// en pantalla vertical (mòbil) cal allunyar-se perquè hi càpiga el poble
-let az = 0.7, el = 0.62, dist = 25 * Math.max(1, Math.min(1.7, 1.1*innerHeight/innerWidth));
+// distància per veure el poble sencer: més lluny com més gran és la cala,
+// i en pantalla vertical (mòbil) també, perquè hi càpiga
+const distInicial = () => 25 * escalaVista() * Math.max(1, Math.min(1.7, 1.1*innerHeight/innerWidth));
+let az = 0.7, el = 0.62, dist = distInicial();
 const centre = new THREE.Vector3(0, 1.4, 0);
 function actualitzarCamera(){
   el = Math.max(0.12, Math.min(1.45, el));
-  dist = Math.max(8, Math.min(70, dist));
+  dist = Math.max(8, Math.min(70*escalaVista(), dist));
   camera.position.set(
     centre.x + dist*Math.cos(el)*Math.sin(az),
     centre.y + dist*Math.sin(el),
@@ -45,6 +47,7 @@ function actualitzarCamera(){
   );
   camera.lookAt(centre);
   posaCel();
+  ajustaBoira();
   redibuixa();
 }
 
@@ -55,8 +58,8 @@ function desplaca(dx, dy){
   const fx = -Math.sin(az), fz = -Math.cos(az);   // endavant, projectat a terra
   centre.x += -rx*dx*k + fx*dy*k;
   centre.z += -rz*dx*k + fz*dy*k;
-  const r = Math.hypot(centre.x, centre.z);
-  if(r > 40){ centre.x *= 40/r; centre.z *= 40/r; }
+  const r = Math.hypot(centre.x, centre.z), lim = 40*escalaVista();
+  if(r > lim){ centre.x *= lim/r; centre.z *= lim/r; }
 }
 
 const raycaster = new THREE.Raycaster();
@@ -322,6 +325,26 @@ document.getElementById('btn-cala').onclick  = ()=>{
   novaCala(Math.floor(Math.random()*1e6)); generarPoble(); construirMalla();
   centre.set(0, 1.4, 0); actualitzarCamera(); instantania();
 };
+
+/* --- mida de la cala --- */
+const botonsMida = {normal:'mida-normal', mitjana:'mida-mitjana', gran:'mida-gran'};
+function marcaMida(){
+  for(const k in botonsMida){
+    const b = document.getElementById(botonsMida[k]);
+    b.classList.toggle('on', k === midaCala);
+    b.setAttribute('aria-pressed', k === midaCala);
+  }
+}
+// La mateixa cala (la mateixa llavor), però de la mida triada. La quadrícula és tota
+// nova, de manera que el poble es torna a generar; amb Ctrl+Z es recupera el d'abans
+function posaMida(m){
+  if(m === midaCala) return;
+  novaCala(seed, m); generarPoble(); construirMalla();
+  centre.set(0, 1.4, 0); dist = distInicial(); actualitzarCamera(); instantania();
+  marcaMida();
+  avis('Cala ' + m + ': ' + cells.length.toLocaleString('ca') + ' cel·les. Amb Ctrl+Z tornes a la d\'abans.');
+}
+for(const k in botonsMida) document.getElementById(botonsMida[k]).onclick = ()=>posaMida(k);
 document.getElementById('btn-buida').onclick = ()=>{
   heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0);
   construirMalla(); instantania();

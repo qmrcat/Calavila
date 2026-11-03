@@ -343,11 +343,13 @@ function construirGrid(){
   scene.add(gridMesh);
 }
 
-function novaCala(s){
+function novaCala(s, mida = midaCala){
   seed = s;
-  cells = construirCala(seed, MIDA_CALA);
+  midaCala = mida;
+  cells = construirCala(seed, MIDES[midaCala]);
   indexarGraella();
   decorarCala();
+  ajustaMida();
   heights = new Array(cells.length).fill(0);
   carrer  = new Array(cells.length).fill(false);
   nivell  = new Array(cells.length).fill(0);
@@ -365,13 +367,18 @@ function generarPoble(llavor = seed + 991){
   let inici = 0, millor = Infinity;
   cells.forEach((c,i)=>{ const d = Math.hypot(c.c.x, c.c.z); if(d < millor){ millor = d; inici = i; } });
 
+  // En una cala més gran, el poble també ho és, en proporció: el radi creix com k i,
+  // per tant, el nombre de cases com k² (k = 1 a la mida normal: el poble de sempre).
+  // Els carrerons creixen en nombre i en llargada (k·k), i així també van amb l'àrea
+  const k = MIDES[midaCala] / MIDES.normal;
+
   // 1) creix la taca de cases
   const cua = [inici], vist = new Set([inici]);
-  const objectiu = 90 + Math.floor(rnd()*55);
+  const objectiu = Math.round((90 + Math.floor(rnd()*55)) * k * k);
   let n = 0;
   while(cua.length && n < objectiu){
     const ci = cua.shift();
-    const d = Math.hypot(cells[ci].c.x, cells[ci].c.z);
+    const d = Math.hypot(cells[ci].c.x, cells[ci].c.z) / k;
     heights[ci] = Math.min(6, Math.max(1, Math.round(4.6 - d*0.24 + (rnd()-0.5)*2.4)));
     n++;
     const nb = shuffle(cells[ci].nb.slice(), rnd);
@@ -382,11 +389,11 @@ function generarPoble(llavor = seed + 991){
   const ocupades = [];
   heights.forEach((h,i)=>{ if(h > 0) ocupades.push(i); });
   if(!ocupades.length) return;
-  const nCamins = 2 + Math.floor(rnd()*3);
+  const nCamins = Math.round((2 + Math.floor(rnd()*3)) * k);
   for(let w=0; w<nCamins; w++){
     let ci = ocupades[Math.floor(rnd()*ocupades.length)];
     let dir = Math.floor(rnd()*4);
-    let passos = 12 + Math.floor(rnd()*14);
+    let passos = Math.round((12 + Math.floor(rnd()*14)) * k);
     while(passos-- > 0){
       heights[ci] = 0; carrer[ci] = true;
       const dins = v => v >= 0 && (heights[v] > 0 || carrer[v]);

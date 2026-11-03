@@ -44,6 +44,7 @@ anima(0);
       deserialitza(g);
       sincronitzaBotons();
       construirMalla();
+      dist = distInicial(); actualitzarCamera();   // la partida pot ser d'una altra mida
     } catch(e){ console.warn('No s\'ha pogut restaurar la partida:', e.message); }
   }
   restaurat = true;

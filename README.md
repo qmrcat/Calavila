@@ -25,6 +25,18 @@ Tria un mode al panell i clica sobre la quadrícula. En els modes que tenen cond
 
 Per treure, fes <kbd>Maj</kbd>+clic o activa el botó **Treure** (al mòbil no hi ha <kbd>Maj</kbd>).
 
+### Mida de la cala
+
+Al panell pots triar la mida de la quadrícula:
+
+| Mida | Cel·les (aprox.) |
+|---|---|
+| **Normal** | 890 |
+| **Mitjana** | 1.700 |
+| **Gran** | 3.000 |
+
+En canviar de mida, la cala és la mateixa (la mateixa llavor), però la quadrícula és tota nova. Per això també es genera un poble nou, proporcionat a la mida. Amb <kbd>Ctrl</kbd>+<kbd>Z</kbd> tornes a la cala d'abans. La boira, les ombres i els límits de la càmera s'adapten a la mida.
+
 ### Càmera
 
 - **Girar:** arrossega.
@@ -72,7 +84,7 @@ La partida es desa sola al navegador (`localStorage`). Amb el botó **Partida…
 - baixar-la com a fitxer `.cala`,
 - carregar-ne una d'enganxada o d'un fitxer.
 
-Una partida és una sola línia de text, i ocupa uns quants kB. Conté la llavor de la cala, que és determinista i es torna a generar igual, i un caràcter per cel·la per a cada camp. Les partides desades amb versions anteriors (sense ponts o sense molls) es continuen carregant.
+Una partida és una sola línia de text, i ocupa uns quants kB. Conté la llavor i la mida de la cala, que és determinista i es torna a generar igual, i un caràcter per cel·la per a cada camp. Les partides desades amb versions anteriors (sense ponts, sense molls o sense mida) es continuen carregant.
 
 ## Estructura del codi
 

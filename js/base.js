@@ -82,7 +82,11 @@ const SORRA_SECA = C('#e8d6ab'), SORRA_MULLADA = C('#b9a177');
 // porticons i portes: sobretot blau, però també verd, fusta i almagre
 const PORTICONS = ['#2f6f8f','#2f6f8f','#285b78','#3d7a68','#56755a','#7b5b3f','#6d8894','#8b4237'].map(C);
 
-const MIDA_CALA = 7.5;   // radi de la silueta, en arestes de la malla triangular
+// mides de cala: radi de la silueta, en arestes de la malla triangular.
+// Normal fa unes 890 cel·les; mitjana, unes 1.700; gran, unes 3.000
+const MIDES = {normal: 7.5, mitjana: 10.5, gran: 14};
+const esMida = m => Object.prototype.hasOwnProperty.call(MIDES, m);
+let midaCala = 'normal';
 const ALT = 0.78;     // alçada d'un bloc
 const ROCA = 1.7;     // fondària del sòcol de roca
 const MAX_H = 8;
