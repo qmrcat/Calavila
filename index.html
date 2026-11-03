@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cala — constructor de pobles de la Costa Brava</title>
+<link rel="stylesheet" href="estils.css">
+</head>
+<body>
+
+<div class="hud" id="hud">
+  <div class="cap">
+    <div>
+      <p class="eyebrow">Costa Brava · quadrícula irregular</p>
+      <h1>Cala</h1>
+    </div>
+    <button id="btn-plega" class="plega" aria-expanded="true" title="Plega el panell">&#8722;</button>
+  </div>
+  <p class="plegable">
+    Clica per construir; <kbd>Maj</kbd>+clic o el botó <em>Treure</em> per treure.
+    Arrossega per girar; amb el botó dret, <kbd>Alt</kbd>, les fletxes o dos dits, per moure't.
+    La roda o el pessic acosten.
+  </p>
+  <div class="seg" role="group" aria-label="Mode">
+    <button id="m-casa" class="on" aria-pressed="true" title="Cases (1)">Cases</button>
+    <button id="m-carrer" aria-pressed="false" title="Carrers (2)">Carrers</button>
+    <button id="m-volta" aria-pressed="false" title="Voltes (3)">Voltes</button>
+    <button id="m-pont" aria-pressed="false" title="Ponts sobre els canals (4)">Ponts</button>
+    <button id="m-pintar" aria-pressed="false" title="Pintar (5)">Pintar</button>
+  </div>
+  <div class="paleta" id="paleta" role="group" aria-label="Color de façana"></div>
+  <p id="avis" role="status" aria-live="polite"></p>
+  <div class="row">
+    <button id="btn-treure" aria-pressed="false" title="Treure (X)">Treure</button>
+    <button id="btn-desfes" title="Desfés (Ctrl+Z)" aria-label="Desfés" disabled>&#8630;</button>
+    <button id="btn-refes" title="Refés (Ctrl+Maj+Z)" aria-label="Refés" disabled>&#8631;</button>
+  </div>
+  <div class="plegable">
+  <p class="nota">
+    El color triat s'aplica al que construeixes; amb <em>Pintar</em> el poses a cases ja fetes.
+    Amb <em>Places auto.</em>, tot buit voltat de tres cases es pavimenta sol.
+    Clica dos cops un carrer per enlairar-lo: les cel·les del costat es tornen escales soles.
+  </p>
+  <div class="row">
+    <button id="btn-poble">Poble nou</button>
+    <button id="btn-cala">Cala nova</button>
+    <button id="btn-buida">Buidar</button>
+  </div>
+  <div class="row">
+    <button id="btn-grid" class="on" aria-pressed="true" title="Quadrícula (G)">Quadrícula</button>
+    <button id="btn-places" class="on" aria-pressed="true"
+            title="Els buits envoltats de cases es pavimenten sols, com al Townscaper (P)">Places auto.</button>
+  </div>
+  <div class="seg" role="group" aria-label="Hora del dia">
+    <button id="h-dia" class="on" aria-pressed="true" title="Dia (N)">Dia</button>
+    <button id="h-nit" aria-pressed="false" title="Nit (N)">Nit</button>
+    <button id="h-auto" aria-pressed="false" title="El temps passa sol, a poc a poc (N)">Automàtic</button>
+  </div>
+  <div class="row">
+    <button id="btn-fitxer" aria-expanded="false" aria-controls="panel">Partida&#8230;</button>
+  </div>
+  <div id="panel">
+    <textarea id="codi" spellcheck="false" placeholder="Enganxa aquí el codi d'una partida"></textarea>
+    <div class="row">
+      <button id="btn-copia">Copia</button>
+      <button id="btn-baixa">Baixa</button>
+      <button id="btn-importa">Carrega</button>
+    </div>
+    <div class="row">
+      <button id="btn-obre">Obre un fitxer&#8230;</button>
+    </div>
+    <input type="file" id="fitxer" accept=".cala,.txt,text/plain" hidden>
+  </div>
+  <details class="dreceres">
+    <summary>Dreceres de teclat</summary>
+    <dl>
+      <dt><kbd>1</kbd>–<kbd>5</kbd></dt><dd>Cases, Carrers, Voltes, Ponts, Pintar</dd>
+      <dt><kbd>X</kbd></dt><dd>Activa o desactiva <em>Treure</em></dd>
+      <dt><kbd>Maj</kbd>+clic</dt><dd>Treu un cop</dd>
+      <dt><kbd>Ctrl</kbd>+<kbd>Z</kbd></dt><dd>Desfés (amb <kbd>Maj</kbd>, refés)</dd>
+      <dt>Fletxes, <kbd>WASD</kbd></dt><dd>Mou la càmera</dd>
+      <dt><kbd>G</kbd> · <kbd>P</kbd></dt><dd>Quadrícula · places automàtiques</dd>
+      <dt><kbd>N</kbd></dt><dd>Dia, nit o automàtic</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Tanca el panell de partida</dd>
+    </dl>
+  </details>
+  </div>
+  <div class="stat">
+    <span>Cases <b id="n-cases">0</b></span>
+    <span>Voltes <b id="n-arcs">0</b></span>
+    <span>Escales <b id="n-esc">0</b></span>
+    <span class="rellotge" title="Hora a la cala"><b id="rellotge">13:00</b></span>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- l'ordre importa: vegeu la capçalera de js/base.js -->
+<script src="js/base.js"></script>
+<script src="js/quadricula.js"></script>
+<script src="js/geometria.js"></script>
+<script src="js/platja-ponts.js"></script>
+<script src="js/cobertes-carrers.js"></script>
+<script src="js/poble.js"></script>
+<script src="js/escena.js"></script>
+<script src="js/controls.js"></script>
+<script src="js/partida.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

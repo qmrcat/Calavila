@@ -1,0 +1,96 @@
+/* Cala — estils del panell */
+
+:root{
+  --calc: #f4efe4;      /* calç */
+  --teula: #c05c3c;     /* teula àrab */
+  --mar: #14526b;       /* mar fonda */
+  --escuma: #cfe4e8;    /* escuma */
+  --pi: #3d5a45;        /* pi mediterrani */
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#9ec9dc}
+canvas{display:block;touch-action:none}
+
+.hud{
+  position:fixed; left:18px; bottom:18px; z-index:10;
+  width:min(300px, calc(100vw - 36px));
+  max-height:calc(100vh - 36px); overflow-y:auto;
+  background:rgba(244,239,228,.82);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(20,82,107,.18);
+  border-radius:3px;
+  box-shadow:0 10px 30px rgba(20,82,107,.22);
+  padding:14px 16px 12px;
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color:#2b3b40;
+  touch-action:manipulation;
+}
+.cap{display:flex; align-items:flex-start; justify-content:space-between; gap:10px}
+.hud .plega{flex:0 0 auto; width:28px; height:28px; padding:0; font-size:16px; line-height:1}
+.hud.plegat .plegable{display:none}
+.hud.plegat .eyebrow{display:none}
+.hud h1{
+  margin:0 0 2px; font-family:Georgia,"Times New Roman",serif;
+  font-size:22px; font-weight:400; letter-spacing:.02em; color:var(--mar);
+}
+.hud .eyebrow{
+  margin:0 0 10px; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:#7d8b8f;
+}
+.hud p{margin:0 0 10px; font-size:12.5px; line-height:1.5; color:#4a5b60}
+.hud kbd{
+  font:inherit; font-size:11px; background:rgba(20,82,107,.08);
+  border:1px solid rgba(20,82,107,.15); border-radius:2px; padding:1px 5px;
+}
+.row{display:flex; gap:6px; margin-top:10px; flex-wrap:wrap}
+button{
+  flex:1 1 auto; font:inherit; font-size:12px; cursor:pointer;
+  padding:7px 10px; border-radius:2px;
+  border:1px solid rgba(20,82,107,.25);
+  background:transparent; color:var(--mar);
+  transition:background .15s, color .15s;
+}
+@media (hover:hover){   /* al tàctil el hover es queda enganxat */
+  .row button:hover:not(:disabled), .seg button:hover, .plega:hover{background:var(--mar); color:var(--calc)}
+}
+button:focus-visible{outline:2px solid var(--teula); outline-offset:2px}
+button:disabled{opacity:.38; cursor:default}
+#btn-desfes, #btn-refes{font-size:17px; line-height:1; padding:4px 10px}
+.row #btn-treure.on, .row #btn-treure.on:hover{background:var(--teula); border-color:var(--teula); color:var(--calc)}
+.seg{display:flex; gap:0; margin-top:10px; border:1px solid rgba(20,82,107,.25); border-radius:2px; overflow:hidden}
+.seg button{border:0; border-radius:0; padding:7px 3px; font-size:11.5px}
+.seg button + button{border-left:1px solid rgba(20,82,107,.25)}
+.seg button.on, .row button.on{background:var(--mar); color:var(--calc)}
+.paleta{display:flex; flex-wrap:wrap; gap:5px; margin-top:10px}
+.paleta button{
+  flex:0 0 auto; width:25px; height:25px; padding:0; border-radius:2px;
+  border:1px solid rgba(20,82,107,.22);
+}
+.paleta button.on{outline:2px solid var(--teula); outline-offset:1px}
+#avis{
+  margin:8px 0 0; padding:7px 9px; display:none;
+  font-size:11.5px; line-height:1.45; color:#8a4a2e;
+  background:rgba(192,92,60,.10); border-left:2px solid var(--teula);
+}
+.stat{
+  margin-top:10px; padding-top:9px; border-top:1px solid rgba(20,82,107,.15);
+  font-size:11px; letter-spacing:.04em; color:#7d8b8f; display:flex; gap:14px;
+}
+.stat span{display:flex; gap:6px}
+.stat b{color:var(--teula); font-weight:600}
+.stat .rellotge{margin-left:auto}
+.stat .rellotge b{color:var(--mar); font-variant-numeric:tabular-nums}
+.hud .nota{margin-top:10px; font-size:11.5px; color:#7d8b8f}
+#panel{display:none; margin-top:10px}
+#panel.obert{display:block}
+#codi{
+  display:block; width:100%; height:64px; resize:vertical; padding:6px;
+  font:11px/1.4 ui-monospace,Consolas,monospace; color:#2b3b40; word-break:break-all;
+  background:rgba(255,255,255,.6); border:1px solid rgba(20,82,107,.25); border-radius:2px;
+}
+.dreceres{margin-top:10px; font-size:11.5px; color:#4a5b60}
+.dreceres summary{cursor:pointer; color:var(--mar)}
+.dreceres dl{display:grid; grid-template-columns:auto 1fr; gap:4px 10px; margin:8px 0 0}
+.dreceres dt{white-space:nowrap}
+.dreceres dd{margin:0}
+@media (prefers-reduced-motion: reduce){ .hud{backdrop-filter:none} }
