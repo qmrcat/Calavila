@@ -20,7 +20,7 @@ function serialitza(){
   };
   return [MARCA, seed, n, autoPlaces ? 1 : 0,
           enc(heights,0), enc(carrer,0), enc(nivell,0), enc(forcat,0), enc(tint,1), enc(pont,0),
-          enc(moll,0), midaCala, enc(fars,0), enc(escales,0), enc(roca,0)].join('|');
+          enc(moll,0), midaCala, enc(fars,0), enc(escales,0), enc(roca,0), enc(mercat,0), enc(bar,0)].join('|');
 }
 
 function deserialitza(txt){
@@ -29,11 +29,11 @@ function deserialitza(txt){
   const sd = +p[1], n = +p[2];
   if(p.length < 9 || !Number.isInteger(sd) || !Number.isInteger(n) || n < 1) throw new Error('Capçalera malmesa.');
   // els camps dels ponts (10è), dels molls (11è), de la mida (12è), dels fars (13è), de les escales (14è)
-  // i de la roca (15è) són posteriors: les partides antigues no els tenen. Tots tenen un caràcter per
+  // de la roca (15è), del mercat de Nadal (16è) i dels bars (17è) són posteriors: les partides antigues no els tenen. Tots tenen un caràcter per
   // cel·la, menys la mida
   const nCamps = Math.min(p.length, 11);
   for(let k=4;k<nCamps;k++) if(p[k].length !== n) throw new Error('Les dades no quadren amb el nombre de cel·les.');
-  for(let k=12;k<Math.min(p.length, 15);k++) if(p[k].length !== n) throw new Error('Les dades no quadren amb el nombre de cel·les.');
+  for(let k=12;k<Math.min(p.length, 17);k++) if(p[k].length !== n) throw new Error('Les dades no quadren amb el nombre de cel·les.');
   const mida = p.length >= 12 ? p[11] : 'normal';
   if(!esMida(mida)) throw new Error('Mida de cala desconeguda.');
 
@@ -54,6 +54,8 @@ function deserialitza(txt){
   const fa = p.length >= 13 ? dec(p[12], 0, 1) : new Array(n).fill(0);
   const es = p.length >= 14 ? dec(p[13], 0, 4) : new Array(n).fill(0);
   const ro = p.length >= 15 ? dec(p[14], 0, 1) : new Array(n).fill(0);
+  const me = p.length >= 16 ? dec(p[15], 0, 1) : new Array(n).fill(0);
+  const ba = p.length >= 17 ? dec(p[16], 0, 2) : new Array(n).fill(0);
 
   let noves = null;                                 // la cala és determinista
   if(sd !== seed || mida !== midaCala || cells.length !== n){
@@ -72,6 +74,8 @@ function deserialitza(txt){
   fars    = fa;
   escales  = es;
   roca    = ro;
+  mercat  = me;
+  bar     = ba;
   autoPlaces = p[3] === '1';
 }
 
@@ -205,4 +209,43 @@ fitxer.onchange = ()=>{
   r.onload = ()=>{ codi.value = r.result; importa(r.result); };
   r.readAsText(f);
   fitxer.value = '';
+};
+
+/* --- imatge de la vila: el que es veu ara, sense el panell ni el ressaltat del cursor --- */
+// Es dibuixa i es copia al moment, dins de la mateixa tasca: així no cal preserveDrawingBuffer
+function captura(){
+  const vist = hoverMesh.visible;
+  hoverMesh.visible = false;
+  renderer.render(scene, camera);
+  const tela = document.createElement('canvas');
+  tela.width = renderer.domElement.width; tela.height = renderer.domElement.height;
+  tela.getContext('2d').drawImage(renderer.domElement, 0, 0);
+  hoverMesh.visible = vist;
+  redibuixa();
+  return new Promise((ok, ko) => tela.toBlob(b => b ? ok(b) : ko(new Error('imatge buida')), 'image/png'));
+}
+function nomCaptura(){
+  const d = new Date(), z = n => String(n).padStart(2, '0');
+  return 'cala-' + d.getFullYear() + z(d.getMonth()+1) + z(d.getDate()) + '-' + z(d.getHours()) + z(d.getMinutes()) + '.png';
+}
+document.getElementById('btn-foto-baixa').onclick = async ()=>{
+  try{
+    const b = await captura(), a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = nomCaptura();
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    avis('Imatge desada: ' + a.download);
+  } catch(e){ avis('No s\'ha pogut fer la imatge.'); }
+};
+document.getElementById('btn-foto-copia').onclick = async ()=>{
+  if(!navigator.clipboard || !navigator.clipboard.write || typeof ClipboardItem === 'undefined'){
+    avis('Aquest navegador no deixa copiar imatges. Fes servir Descarrega.');
+    return;
+  }
+  try{
+    // la promesa va directament al ClipboardItem: Safari només ho accepta així
+    await navigator.clipboard.write([new ClipboardItem({'image/png': captura()})]);
+    avis('Imatge copiada al porta-retalls. Ja la pots enganxar.');
+  } catch(e){ avis('El navegador no ha deixat copiar la imatge. Fes servir Descarrega.'); }
 };

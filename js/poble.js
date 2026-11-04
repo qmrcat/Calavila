@@ -8,6 +8,8 @@ let moll = [];   // 1 = aquest carrer és un moll de port
 let escales = []; // escala posada a mà: l'aresta cap on puja + 1 (0 = cap)
 let fars = [];   // 1 = un far posat a mà (sobre l'aigua fa un illot; sobre un carrer, hi va dret)
 let roca = [];   // 1 = el terreny d'aquesta cel·la és roca de muntanya, no paviment
+let mercat = []; // 1 = una parada del mercat de Nadal (només es veu amb els guarniments)
+let bar = [];    // 1 = la planta baixa de la casa és un bar; 2, un restaurant
 let mode = 'casa', colSel = -1, modeTreure = false;
 let townMesh = null, pickMesh = null, faceCell = null, hoverMesh = null;
 let fans = new Map(), posV = new Map(), vora = new Set();
@@ -149,6 +151,25 @@ function potFar(ci){
   if(heights[ci] > 0 || pont[ci] || span[ci]) return false;
   return !esCarrer[ci] || carrerPla(ci);
 }
+// Fanals: n'hi pot haver en un carrer, un moll o un pont. Perquè no en surtin mai dos de tocar
+// (tampoc per un cantó), d'entre els veïns que en voldrien un, només el té la cel·la d'índex més baix.
+// volFanal() ha de seguir les mateixes condicions que mobiliari(), mobiliariMoll() i pontG()
+let fanals = new Set();
+function volFanal(ci){
+  if(pont[ci]) return hash3(ci,97,1) < 0.5;
+  if(!esCarrer[ci] || escalaE[ci] >= 0 || muntSup[ci] || (fars[ci] && !span[ci]) || esMercat(ci) || terrassaDe.has(ci) || (nadal && arbreNadalAqui(ci))) return false;
+  if(!moll[ci]){ const h = hash3(ci,21,3); return !span[ci] && h >= 0.31 && h < 0.43; }
+  if(esPuntaMoll(ci) && !span[ci] && hash3(ci,160,1) < 0.7) return false;
+  const h = hash3(ci,150,1); return h >= 0.44 && h < 0.58;
+}
+function triaFanals(){
+  const vol = cells.map((c, ci) => volFanal(ci));
+  fanals = new Set();
+  for(let ci=0; ci<cells.length; ci++){
+    if(!vol[ci]) continue;
+    if(!cells[ci].vi.some(v => fans.get(v).some(b => b < ci && vol[b]))) fanals.add(ci);
+  }
+}
 // es pot fer roca aquí (o alçar la que hi ha)? no sota una casa, un pont ni una volta
 const potRoca = ci => heights[ci] === 0 && !pont[ci] && !span[ci] && !forcat[ci] && !(roca[ci] && carrer[ci] && nivell[ci] >= NIV_MAX);
 // per fer volta cal la cel·la buida i dues cases de 2+ pisos EN ARESTES OPOSADES
@@ -189,6 +210,9 @@ function alturaTop(ci){
 
 function construirMalla(){
   analitzar();
+  triaBars();
+  if(nadal) triaArbresNadal();
+  triaFanals();
   const G = newG();
   GL = newG(); GF = newG(); LLUMS = [];
   let nArcs = 0, nEsc = 0;
@@ -212,6 +236,9 @@ function construirMalla(){
       sup = paviment(G, cel, ci);
       if(!sup.pla) nEsc++;
       else if(fars[ci] && !span[ci]) far(G, cel.c.x, sup.y, cel.c.z, ci);   // el far posat a mà, al lloc dels estris
+      else if(esMercat(ci)){ parada(G, cel, ci, sup.y); llumsMercat(G, cel, ci, sup.y); }   // mercat de Nadal
+      else if(terrassaDe.has(ci)) terrassa(G, cel, ci, sup.y);   // la terrassa d'un bar o restaurant
+      else if(nadal && arbreNadalAqui(ci)) arbreNadal(G, cel.c.x, sup.y, cel.c.z, ci);   // per Nadal, al lloc dels estris
       else if(!moll[ci]) mobiliari(G, cel, ci, sup.y, span[ci]);   // a les escales no hi va res
       else if(esPuntaMoll(ci) && !span[ci] && hash3(ci,160,1) < 0.7) far(G, cel.c.x, sup.y, cel.c.z, ci);
       else mobiliariMoll(G, cel, ci, sup.y);
@@ -237,6 +264,7 @@ function construirMalla(){
         quad(G, [a.x,Math.min(sota,tA),a.z], [b.x,Math.min(sota,tB),b.z], [B.x,tB,B.z], [A.x,tA,A.z], pedra);
       }
     }
+    if(nadal && via && !munt && h <= 0) llumsCarrer(G, cel, ci);   // llums de Nadal d'una façana a l'altra
     if(h <= 0) continue;
 
     // parets, pis per pis
@@ -287,6 +315,9 @@ function construirMalla(){
         }
       }
     }
+
+    if(nadal && !span[ci] && casaGuarnida(ci)) garlandaCasa(G, cel, ci, h);   // garlanda de Nadal
+    if(barFront.has(ci)) facanaBarG(G, cel, ci);                // bar o restaurant a la planta baixa
 
     // escala a sobre de la casa: arrenca del terrat i puja un nivell
     if(escalaE[ci] >= 0){
@@ -391,13 +422,15 @@ function novaCala(s, mida = midaCala){
   fars    = new Array(cells.length).fill(0);
   escales  = new Array(cells.length).fill(0);
   roca    = new Array(cells.length).fill(0);
+  mercat  = new Array(cells.length).fill(0);
+  bar     = new Array(cells.length).fill(0);
   tint    = new Array(cells.length).fill(-1);   // -1 = automàtic
 }
 
 // la llavor del poble va a part de la de la cala: `seed` ha de ser sempre
 // la que ha fet la quadrícula, perquè és la que es desa a la partida
 function generarPoble(llavor = seed + 991){
-  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0);
+  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0); mercat.fill(0); bar.fill(0);
   const rnd = mulberry32(llavor);
   let inici = 0, millor = Infinity;
   cells.forEach((c,i)=>{ const d = Math.hypot(c.c.x, c.c.z); if(d < millor){ millor = d; inici = i; } });

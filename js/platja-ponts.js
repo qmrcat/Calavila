@@ -139,7 +139,7 @@ function pontG(G, cel, ci){
     if(!esTerra(nb) && !(nb >= 0 && pont[nb] > 0))
       quad2(G, pt(s,T0,YW), pt(s,T1,YW), pt(s,T1,d), pt(s,T0,d), PEDRA_PONT);
   }
-  if(hash3(ci,97,1) < 0.5){                               // fanal al mig d'una barana
+  if(fanals.has(ci)){                                     // fanal al mig d'una barana (si no n'hi ha cap al costat)
     const t = hash3(ci,97,2) < 0.5 ? T0 + GR/2 : T1 - GR/2, q = B(0.5, t);
     fanal(G, q.x, yd(0.5) + BAR, q.z);
   }

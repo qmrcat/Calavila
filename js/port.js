@@ -81,9 +81,8 @@ function mobiliariMoll(G, cel, ci, y){
     const col = XARXES[Math.floor(hash3(ci,152,1)*XARXES.length)];
     bola(G, a.x, y, a.z, 0.22, 0.10, col, ci*17 + 3, 8);
     bola(G, a.x + ux*0.12, y + 0.07, a.z + uz*0.12, 0.05, 0.08, BOIA, ci*17 + 4, 6);
-  } else if(h < 0.58){                            // fanal
-    const p = entre(c, A, 0.7);
-    fanal(G, p.x, y, p.z);
+  } else if(h < 0.58){                            // fanal, si no n'hi ha cap al costat
+    if(fanals.has(ci)){ const p = entre(c, A, 0.7); fanal(G, p.x, y, p.z); }
   } else if(h < 0.66){                            // banc mirant l'aigua
     banc(G, a.x, a.z, ux, uz, y);
   }
