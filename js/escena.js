@@ -189,6 +189,9 @@ function bressola(b, s){
 /* --- gavines que volten la cala --- */
 const matGavina = new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide});
 let gavines = [];
+let gavinesActives = true;   // es poden amagar des de Configuració
+let gavinesDeDia = true;     // de nit no volen
+const mostraGavines = () => { for(const b of gavines) b.g.visible = gavinesActives && gavinesDeDia; };
 
 function creaGavines(){
   const BLANC = C('#f4f3ef'), GRIS = C('#a3abb0'), NEGRE = C('#2a2a2a');
@@ -344,7 +347,8 @@ function aplicaHora(h){
   if(haloMesh) haloMesh.visible = encesa > 0.01;
   estrelles.material.opacity = ss(0.45, 1, nit)*0.9;
   lluna.material.opacity = ss(0, 0.2, -e);
-  for(const b of gavines) b.g.visible = dia > 0.35;   // de nit les gavines no volen
+  gavinesDeDia = dia > 0.35;   // de nit les gavines no volen
+  mostraGavines();
   posaCel();
 
   const hh = Math.floor(h), mm = Math.floor((h - hh)*60);

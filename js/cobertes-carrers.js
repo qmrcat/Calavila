@@ -83,8 +83,10 @@ function arcada(G, cel, ci, col){
 /* ============================================================
    COBERTES FUSIONADES
    ------------------------------------------------------------
-   Les cel·les veïnes que acaben a la mateixa alçada formen una
-   regió i comparteixen una sola teulada. L'alçada de cada punt
+   Les cel·les veïnes que acaben a la mateixa alçada i tenen el
+   mateix color de façana (el mateix tint, o totes dues
+   automàtiques) formen una regió i comparteixen una sola
+   teulada. Si el color és diferent, cada casa fa la seva. L'alçada de cada punt
    de la teulada depèn de la distància del vèrtex a la vora de
    la regió (0, 1, 2, 3 anells): un bloc solt fa una piràmide,
    quatre de junts fan un carener. Els vèrtexs de vora es
@@ -98,12 +100,13 @@ function cobertes(G){
   const vista = new Array(n).fill(false);
   for(let ci=0; ci<n; ci++){
     if(heff[ci] <= 0 || vista[ci] || escalaE[ci] >= 0) continue;   // una escala a sobre fa de coberta
-    const h = heff[ci], pila = [ci], membres = [ci];
+    // només s'ajunten les del mateix color: una casa pintada d'un altre color és un edifici a part
+    const h = heff[ci], color = tint[ci], pila = [ci], membres = [ci];
     vista[ci] = true;
     while(pila.length){
       const a = pila.pop();
       for(const b of cells[a].nb){
-        if(b >= 0 && !vista[b] && heff[b] === h && escalaE[b] < 0){ vista[b] = true; pila.push(b); membres.push(b); }
+        if(b >= 0 && !vista[b] && heff[b] === h && escalaE[b] < 0 && tint[b] === color){ vista[b] = true; pila.push(b); membres.push(b); }
       }
     }
     // L'estil de la coberta (teula o terrat, color, xemeneia) surt d'una casa del mateix

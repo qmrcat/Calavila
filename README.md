@@ -16,7 +16,7 @@ Tria un mode al panell i clica sobre la quadrícula. Els modes van en dos grups:
 
 | Mode | Què fa |
 |---|---|
-| **Cases** | A l'aigua, el primer clic fa el terreny i el segon, la casa. Després, cada clic hi afegeix un pis. Les cases veïnes de la mateixa alçada comparteixen teulada. |
+| **Cases** | A l'aigua, el primer clic fa el terreny i el segon, la casa. Després, cada clic hi afegeix un pis. Les cases veïnes de la mateixa alçada i del mateix color comparteixen teulada; si són de colors diferents, cadascuna fa la seva. |
 | **Carrers** | Pavimenta una cel·la. Si hi tornes a clicar, l'enlaires un nivell. |
 | **Voltes** | Fa una volta sobre un carrer que tingui cases de dos pisos o més a banda i banda. |
 | **Pintar** | Canvia el color de la façana de les cases que ja hi ha. |
@@ -79,7 +79,7 @@ Cada **Poble nou** té un turó de roca a tocar del poble, a l'altra banda de la
 
 ### Mida de la cala
 
-Al panell pots triar la mida de la quadrícula:
+A **Configuració** pots triar la mida de la quadrícula:
 
 | Mida | Cel·les (aprox.) |
 |---|---|
@@ -94,6 +94,16 @@ En canviar de mida, la cala és la mateixa (la mateixa llavor), però la quadrí
 - **Girar:** arrossega.
 - **Moure't:** arrossega amb el botó dret o amb <kbd>Alt</kbd>, fes servir les fletxes o <kbd>WASD</kbd>, o arrossega amb dos dits. Un clic amb el botó dret sense arrossegar treu (vegeu *Treure*).
 - **Acostar i allunyar:** roda del ratolí o pessic.
+
+### Configuració
+
+Al final del panell hi ha la secció **Configuració**, plegada: clica'n l'etiqueta per desplegar-la. Hi ha:
+
+- **Mida de la cala:** normal, mitjana o gran (vegeu *Mida de la cala*).
+- **Construcció:** **Places auto.**, perquè els buits envoltats de cases es pavimentin sols.
+- **Hora del dia:** dia, nit o automàtic.
+- **Escena:** **Quadrícula** mostra o amaga la quadrícula sobre l'aigua, i **Gavines** les fa volar o les atura. Per defecte volen, i l'opció es recorda en aquest navegador.
+- **Partida:** desar, copiar i carregar partides (vegeu *Partides*).
 
 ### Dreceres de teclat
 
@@ -129,11 +139,11 @@ En canviar de mida, la cala és la mateixa (la mateixa llavor), però la quadrí
   - De nit hi ha estrelles i lluna, i s'encenen les finestres, els fanals i els fars.
   - El mode automàtic fa passar un dia sencer en 6 minuts.
 - **Muntanyes de roca** amb pendents, mates i pins, on també es pot construir.
-- **Gavines** que volten la cala.
+- **Gavines** que volten la cala. Les pots aturar a **Configuració**.
 
 ## Partides
 
-La partida es desa sola al navegador (`localStorage`). Amb el botó **Partida…** pots:
+La partida es desa sola al navegador (`localStorage`). Amb el botó **Partida…**, a la secció **Configuració**, pots:
 
 - copiar-la com a text,
 - baixar-la com a fitxer `.cala`,

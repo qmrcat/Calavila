@@ -445,6 +445,23 @@ btnPlega.onclick = ()=>posaPlegat(!hud.classList.contains('plegat'));
   posaPlegat(v === null ? matchMedia('(max-width: 600px)').matches : v === '1');
 }
 
+/* --- gavines: es poden aturar. Es recorda en aquest navegador, no a la partida --- */
+function posaGavines(v){
+  gavinesActives = v;
+  mostraGavines();
+  const b = document.getElementById('btn-gavines');
+  b.classList.toggle('on', v);
+  b.setAttribute('aria-pressed', v);
+  try{ localStorage.setItem('cala:gavines', v ? '1' : '0'); } catch(e){}
+  redibuixa();
+}
+document.getElementById('btn-gavines').onclick = ()=>posaGavines(!gavinesActives);
+{
+  let v = null;
+  try{ v = localStorage.getItem('cala:gavines'); } catch(e){}
+  posaGavines(v !== '0');   // per defecte, volen
+}
+
 /* --- dia, nit o automàtic --- */
 const botonsHora = {dia:'h-dia', nit:'h-nit', auto:'h-auto'};
 // directe: salta a l'hora sense passar per la posta (en arrencar)

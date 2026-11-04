@@ -45,7 +45,7 @@
   <div class="plegable">
   <p class="nota">
     El color triat s'aplica al que construeixes; amb <em>Pintar</em> el poses a cases ja fetes.
-    Amb <em>Places auto.</em>, tot buit voltat de tres cases es pavimenta sol.
+    Amb <em>Places auto.</em> (a <em>Configuració</em>), tot buit voltat de tres cases es pavimenta sol.
     Clica dos cops un carrer per enlairar-lo un nivell; per pujar-hi, posa-hi una escala al costat en mode <em>Escales</em>.
   </p>
   <div class="row">
@@ -53,24 +53,34 @@
     <button id="btn-cala">Cala nova</button>
     <button id="btn-buida">Buidar</button>
   </div>
-  <div class="seg" role="group" aria-label="Mida de la cala">
-    <button id="mida-normal" class="on" aria-pressed="true" title="Cala normal (unes 890 cel·les)">Normal</button>
-    <button id="mida-mitjana" aria-pressed="false" title="Cala mitjana (unes 1.700 cel·les). Fa un poble nou">Mitjana</button>
-    <button id="mida-gran" aria-pressed="false" title="Cala gran (unes 3.000 cel·les). Fa un poble nou">Gran</button>
-  </div>
-  <div class="row">
-    <button id="btn-grid" class="on" aria-pressed="true" title="Quadrícula (G)">Quadrícula</button>
-    <button id="btn-places" class="on" aria-pressed="true"
-            title="Els buits envoltats de cases es pavimenten sols, com al Townscaper (P)">Places auto.</button>
-  </div>
-  <div class="seg" role="group" aria-label="Hora del dia">
-    <button id="h-dia" class="on" aria-pressed="true" title="Dia (N)">Dia</button>
-    <button id="h-nit" aria-pressed="false" title="Nit (N)">Nit</button>
-    <button id="h-auto" aria-pressed="false" title="El temps passa sol, a poc a poc (N)">Automàtic</button>
-  </div>
-  <div class="row">
-    <button id="btn-fitxer" aria-expanded="false" aria-controls="panel">Partida&#8230;</button>
-  </div>
+  <details class="desplega" id="config">
+    <summary>Configuració</summary>
+    <p class="etiq">Mida de la cala</p>
+    <div class="seg" role="group" aria-label="Mida de la cala">
+      <button id="mida-normal" class="on" aria-pressed="true" title="Cala normal (unes 890 cel·les)">Normal</button>
+      <button id="mida-mitjana" aria-pressed="false" title="Cala mitjana (unes 1.700 cel·les). Fa un poble nou">Mitjana</button>
+      <button id="mida-gran" aria-pressed="false" title="Cala gran (unes 3.000 cel·les). Fa un poble nou">Gran</button>
+    </div>
+    <p class="etiq">Construcció</p>
+    <div class="row">
+      <button id="btn-places" class="on" aria-pressed="true"
+              title="Els buits envoltats de cases es pavimenten sols, com al Townscaper (P)">Places auto.</button>
+    </div>
+    <p class="etiq">Hora del dia</p>
+    <div class="seg" role="group" aria-label="Hora del dia">
+      <button id="h-dia" class="on" aria-pressed="true" title="Dia (N)">Dia</button>
+      <button id="h-nit" aria-pressed="false" title="Nit (N)">Nit</button>
+      <button id="h-auto" aria-pressed="false" title="El temps passa sol, a poc a poc (N)">Automàtic</button>
+    </div>
+    <p class="etiq">Escena</p>
+    <div class="row">
+      <button id="btn-grid" class="on" aria-pressed="true" title="Quadrícula (G)">Quadrícula</button>
+      <button id="btn-gavines" class="on" aria-pressed="true" title="Les gavines volen sobre la cala (de dia)">Gavines</button>
+    </div>
+    <p class="etiq">Partida</p>
+    <div class="row">
+      <button id="btn-fitxer" aria-expanded="false" aria-controls="panel">Partida&#8230;</button>
+    </div>
   <div id="panel">
     <textarea id="codi" spellcheck="false" placeholder="Enganxa aquí el codi d'una partida"></textarea>
     <div class="row">
@@ -83,7 +93,8 @@
     </div>
     <input type="file" id="fitxer" accept=".cala,.txt,text/plain" hidden>
   </div>
-  <details class="dreceres">
+  </details>
+  <details class="desplega dreceres">
     <summary>Dreceres de teclat</summary>
     <dl>
       <dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>Cases, Carrers, Voltes, Pintar</dd>
