@@ -10,15 +10,19 @@ let fars = [];   // 1 = un far posat a mà (sobre l'aigua fa un illot; sobre un 
 let roca = [];   // 1 = el terreny d'aquesta cel·la és roca de muntanya, no paviment
 let mercat = []; // 1 = una parada del mercat de Nadal (només es veu amb els guarniments)
 let bar = [];    // 1 = la planta baixa de la casa és un bar; 2, un restaurant
+let porxo = [];  // 1 = la planta baixa de la casa és un porxo obert, amb arcs
+let platja = []; // 0 = cap; 1 = arena; 2 i més, què hi ha a sobre (vegeu ELEMENTS_PLATJA)
 let mode = 'casa', colSel = -1, modeTreure = false;
 let townMesh = null, pickMesh = null, faceCell = null, hoverMesh = null;
 let fans = new Map(), posV = new Map(), vora = new Set();
 let heff = [], base = [], span = [], esCarrer = [], nivEf = [], tipusTorre = [];
 let nvC = [], escalaE = [], terratForcat = [];   // nivell de cada cantó dels carrers; aresta per on puja l'escala (-1 si és pla)
 let llumMesh = null, finestraMesh = null, haloMesh = null;
-let esSorra = [], sorraDist = [], platjaA = 0;
-const PLATJA_AMPLE = 0.75;   // mitja obertura del tram de platja, en radians
+let esSorra = [], platjaA = 0;
+const PLATJA_AMPLE = 0.75;   // mitja obertura del tram de platja del poble nou, en radians
 let gridMesh = null, mostraGrid = true, spanTop = [];
+let voltaDe = [];   // la casa on s'aguanta cada volta (n'agafa el color), o -1
+let PILARS = new Set();   // vèrtexs on ja hi ha un pilar de porxo
 let autoPlaces = true;   // els buits envoltats de cases es pavimenten sols
 
 function indexarGraella(){
@@ -49,6 +53,7 @@ function analitzar(){
   base = new Array(n).fill(0);
   span = new Array(n).fill(false);
   spanTop = new Array(n).fill(0);
+  voltaDe = new Array(n).fill(-1);
   esCarrer = new Array(n).fill(false);
 
   for(let ci=0; ci<n; ci++){
@@ -63,23 +68,28 @@ function analitzar(){
     // soles, les voltes només es fan sobre carrers: així els canals queden oberts
     if(!forcat[ci] && (!esCarrer[ci] || roca[ci])) continue;   // ni sobre la roca
     const nb = cells[ci].nb.map(v => v >= 0 ? heights[v] : 0);
-    let L = Infinity;
+    let L = Infinity, vei = -1;
     for(let e=0;e<2;e++){
       const a = nb[e], b = nb[e+2];
       if(a < 2 || b < 2) continue;                 // cal casa a banda i banda
       const m = Math.min(a,b);
       // a mà n'hi ha prou amb dos pisos; sol, com més altes més probable
       const prob = forcat[ci] ? 1 : m >= 5 ? 1 : m >= 4 ? 0.40 : 0.22;
-      if(hash3(ci,7,13) < prob) L = Math.min(L, a, b);
+      // la volta s'aguanta sobre la casa més baixa de les dues, i en pren el color
+      if(hash3(ci,7,13) < prob && m < L){ L = m; vei = cells[ci].nb[a <= b ? e : e+2]; }
     }
-    if(L !== Infinity){ span[ci] = true; spanTop[ci] = L; }
+    if(L !== Infinity){ span[ci] = true; spanTop[ci] = L; voltaDe[ci] = vei; }
   }
+
+  // cases amb porxo: la planta baixa és oberta i s'hi passa per sota com per un carrer.
+  // Es tracten com una volta que ja té la casa a sobre, al nivell del terreny on és
+  for(let ci=0; ci<n; ci++) if(porxo[ci] && heights[ci] >= 2 && !pont[ci]){ span[ci] = true; esCarrer[ci] = true; }
 
   // sota una volta i al seu voltant el carrer es queda a nivell zero:
   // una escala d'un pis sencer travessaria la volta
   nivEf = nivell.slice();
   for(let ci=0; ci<n; ci++){
-    if(!span[ci]) continue;
+    if(!span[ci] || heights[ci] > 0) continue;   // el porxo es queda al seu nivell
     nivEf[ci] = 0;
     for(const v of cells[ci].nb) if(v >= 0) nivEf[v] = 0;
   }
@@ -90,38 +100,27 @@ function analitzar(){
     base[ci] = nivEf[ci];
     heff[ci] = base[ci] + heights[ci];
   }
-  for(let ci=0; ci<n; ci++) if(span[ci]) heff[ci] = spanTop[ci];
+  for(let ci=0; ci<n; ci++) if(span[ci] && !heights[ci]) heff[ci] = spanTop[ci];
 
   // torres: cel·les altes i soles, amb tots els veïns com a mínim dos pisos més baixos
   tipusTorre = new Array(n).fill(null);
   for(let ci=0; ci<n; ci++){
-    if(heights[ci] <= 0 || heff[ci] < 4 || escales[ci]) continue;   // amb una escala a sobre no és torre
+    if(heights[ci] <= 0 || heff[ci] < 4 || escales[ci] || span[ci]) continue;   // amb una escala a sobre, o un porxo, no és torre
     if(cells[ci].nb.every(b => b < 0 || heff[b] <= heff[ci] - 2))
       tipusTorre[ci] = hash3(ci,31,7) < 0.5 ? 'campanar' : 'guaita';
   }
 
-  // platja: distància (en cel·les) a allò construït, fins a 2
+  // platja: la feta a mà, mentre no hi hagi res a sobre (un carrer, una casa, un pont o un far la tapen)
   esSorra = new Array(n).fill(false);
-  sorraDist = new Array(n).fill(-1);
-  const cua = [];
-  for(let ci=0; ci<n; ci++) if(heff[ci] > 0 || esCarrer[ci]){ sorraDist[ci] = 0; cua.push(ci); }
-  for(let i=0; i<cua.length; i++){
-    const a = cua[i];
-    if(sorraDist[a] >= 2) continue;
-    for(const b of cells[a].nb) if(b >= 0 && sorraDist[b] < 0){ sorraDist[b] = sorraDist[a] + 1; cua.push(b); }
-  }
-  for(let ci=0; ci<n; ci++){
-    if(sorraDist[ci] < 1 || pont[ci] || fars[ci] || esCanal(ci)) continue;   // ni els canals ni els illots s'omplen d'arena
-    const c = cells[ci].c;
-    const da = Math.abs((((Math.atan2(c.z, c.x) - platjaA) % 6.283) + 9.425) % 6.283 - 3.1416);
-    if(da < PLATJA_AMPLE) esSorra[ci] = true;
-  }
+  for(let ci=0; ci<n; ci++)
+    esSorra[ci] = platja[ci] > 0 && heff[ci] <= 0 && !esCarrer[ci] && !pont[ci] && !fars[ci];
 
   calculaEscales();
   calculaMuntanya();
 }
 
-const ocupat = (ci,L) => ci >= 0 && !(span[ci] && L === 0) && L >= base[ci] && L < heff[ci];
+// a la planta baixa d'una volta o d'un porxo no hi ha res: s'hi passa
+const ocupat = (ci,L) => ci >= 0 && !(span[ci] && L === base[ci]) && L >= base[ci] && L < heff[ci];
 
 /* --- ponts i canals --- */
 const esTerra = b => b >= 0 && (heff[b] > 0 || esCarrer[b]);
@@ -157,7 +156,7 @@ function potFar(ci){
 let fanals = new Set();
 function volFanal(ci){
   if(pont[ci]) return hash3(ci,97,1) < 0.5;
-  if(!esCarrer[ci] || escalaE[ci] >= 0 || muntSup[ci] || (fars[ci] && !span[ci]) || esMercat(ci) || terrassaDe.has(ci) || (nadal && arbreNadalAqui(ci))) return false;
+  if(!esCarrer[ci] || escalaE[ci] >= 0 || muntSup[ci] || (fars[ci] && !span[ci]) || esMercat(ci) || terrassaDe.has(ci) || (nadal && arbreNadalAqui(ci)) || gegantsAqui(ci)) return false;
   if(!moll[ci]){ const h = hash3(ci,21,3); return !span[ci] && h >= 0.31 && h < 0.43; }
   if(esPuntaMoll(ci) && !span[ci] && hash3(ci,160,1) < 0.7) return false;
   const h = hash3(ci,150,1); return h >= 0.44 && h < 0.58;
@@ -178,6 +177,17 @@ function potVolta(ci){
   const nb = cells[ci].nb.map(v => v >= 0 ? heights[v] : 0);
   return (nb[0] >= 2 && nb[2] >= 2) || (nb[1] >= 2 && nb[3] >= 2);
 }
+// sobre els arcs (d'una volta o d'un porxo) els cantons són vius: si no, els arcs, que arriben fins
+// al vèrtex, sobresortirien per sota dels cantons arrodonits
+function cantonsCasa(ci, L){
+  const c = cantons(cells[ci], L);
+  if(span[ci]) c.rodo = [false, false, false, false];
+  return c;
+}
+// una casa de dos pisos o més pot tenir la planta baixa porxada, sola o al costat d'altres
+const potPorxo = ci => ci >= 0 && heights[ci] >= 2 && !pont[ci];
+// el color de façana que compta per ajuntar teulades: una volta sense pintar fa el de la seva casa
+const tintEf = ci => tint[ci] < 0 && voltaDe[ci] >= 0 ? tint[voltaDe[ci]] : tint[ci];
 
 // fins on és massís el veí: serveix per saber quanta roca cal veure
 function solTop(ci){
@@ -193,6 +203,7 @@ function solTop(ci){
 // color de façana: el triat a mà, o un de la barreja segons la cel·la
 function colorParet(ci){
   const k = tint[ci];
+  if(k < 0 && voltaDe[ci] >= 0) return colorParet(voltaDe[ci]);   // la volta, del color de la casa on s'aguanta
   if(k < 0 && tipusTorre[ci] === 'guaita') return TORRE;   // les torres de defensa, de pedra vista
   return k >= 0 ? PALETA[k] : PARETS[Math.floor(hash3(ci,0,7)*PARETS.length)];
 }
@@ -212,9 +223,10 @@ function construirMalla(){
   analitzar();
   triaBars();
   if(nadal) triaArbresNadal();
+  if(ambGegants) triaGegants();
   triaFanals();
   const G = newG();
-  GL = newG(); GF = newG(); LLUMS = [];
+  GL = newG(); GF = newG(); LLUMS = []; PILARS = new Set(); LLOCS_DIADA = new Map();
   let nArcs = 0, nEsc = 0;
 
   for(let ci=0; ci<cells.length; ci++){
@@ -239,16 +251,17 @@ function construirMalla(){
       else if(esMercat(ci)){ parada(G, cel, ci, sup.y); llumsMercat(G, cel, ci, sup.y); }   // mercat de Nadal
       else if(terrassaDe.has(ci)) terrassa(G, cel, ci, sup.y);   // la terrassa d'un bar o restaurant
       else if(nadal && arbreNadalAqui(ci)) arbreNadal(G, cel.c.x, sup.y, cel.c.z, ci);   // per Nadal, al lloc dels estris
+      else if(gegantsAqui(ci)) gegants(G, cel, ci, sup.y);   // per la Festa Major, els gegants a la plaça
       else if(!moll[ci]) mobiliari(G, cel, ci, sup.y, span[ci]);   // a les escales no hi va res
       else if(esPuntaMoll(ci) && !span[ci] && hash3(ci,160,1) < 0.7) far(G, cel.c.x, sup.y, cel.c.z, ci);
       else mobiliariMoll(G, cel, ci, sup.y);
     }
 
     // sòcol de roca cap a l'aigua, fins al nivell del terra d'aquesta cel·la
-    if(!span[ci]){
+    if(!span[ci] || heights[ci] > 0){              // sota un porxo, també
       const baix = expand(cel.p, cel.c, 1.10);
-      // el terra d'aquesta cel·la: pla si és casa, per vèrtexs si és carrer
-      const topV = k => munt ? cantoMunt(ci, k) : (h <= 0 && via) ? nvC[ci][k]*ALT + CARRER_Y : base[ci]*ALT;
+      // el terra d'aquesta cel·la: pla si és casa, per vèrtexs si és carrer (o porxo)
+      const topV = k => munt ? cantoMunt(ci, k) : ((h <= 0 || span[ci]) && via) ? nvC[ci][k]*ALT + CARRER_Y : base[ci]*ALT;
       for(let e=0;e<4;e++){
         const f = (e+1)%4;
         if(munt && esMunt(cel.nb[e])) continue;        // dues roques fan un sol pendent
@@ -265,14 +278,15 @@ function construirMalla(){
       }
     }
     if(nadal && via && !munt && h <= 0) llumsCarrer(G, cel, ci);   // llums de Nadal d'una façana a l'altra
+    if(festa && via && !munt && h <= 0) banderetesCarrer(G, cel, ci);   // i banderetes de Festa Major
     if(h <= 0) continue;
 
     // parets, pis per pis
     const torre = tipusTorre[ci];
     for(let L=base[ci]; L<h; L++){
-      if(span[ci] && L === 0){ arcada(G, cel, ci, col); nArcs++; continue; }
+      if(span[ci] && L === base[ci]){ arcada(G, cel, ci, col, L); nArcs++; continue; }
       const y0 = L*ALT, y1 = y0 + ALT;
-      const {ext, rodo} = cantons(cel, L);
+      const {ext, rodo} = cantonsCasa(ci, L);
       const curva = [0,1,2,3].map(i => rodo[i] ? arcCanto(cel, i) : null);
 
       for(let e=0;e<4;e++){                    // trams rectes, escurçats pels cantons
@@ -304,7 +318,7 @@ function construirMalla(){
         }
       }
 
-      const rodoDalt = (L+1 < h) ? cantons(cel, L+1).rodo : null;
+      const rodoDalt = (L+1 < h) ? cantonsCasa(ci, L+1).rodo : null;
       for(let i=0;i<4;i++){                     // ressalts horitzontals
         if(L === base[ci] && rodo[i]) tapaCanto(G, cel.p[i], curva[i], base[ci]*ALT, true, ROCA_A);
         if(rodoDalt){
@@ -335,6 +349,7 @@ function construirMalla(){
   }
 
   cobertes(G);
+  if(diada) banderesDiada();                    // senyeres i estelades, quan tots els llocs són apuntats
   construirGrid();
 
   if(townMesh){ townMesh.geometry.dispose(); scene.remove(townMesh); }
@@ -424,13 +439,15 @@ function novaCala(s, mida = midaCala){
   roca    = new Array(cells.length).fill(0);
   mercat  = new Array(cells.length).fill(0);
   bar     = new Array(cells.length).fill(0);
+  porxo   = new Array(cells.length).fill(0);
+  platja  = new Array(cells.length).fill(0);
   tint    = new Array(cells.length).fill(-1);   // -1 = automàtic
 }
 
 // la llavor del poble va a part de la de la cala: `seed` ha de ser sempre
 // la que ha fet la quadrícula, perquè és la que es desa a la partida
 function generarPoble(llavor = seed + 991){
-  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0); mercat.fill(0); bar.fill(0);
+  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0); mercat.fill(0); bar.fill(0); porxo.fill(0); platja.fill(0);
   const rnd = mulberry32(llavor);
   let inici = 0, millor = Infinity;
   cells.forEach((c,i)=>{ const d = Math.hypot(c.c.x, c.c.z); if(d < millor){ millor = d; inici = i; } });
@@ -541,4 +558,7 @@ function generarPoble(llavor = seed + 991){
     }
     if(nivell[cim] > 0 && rnd() < 0.6) heights[cim] = 1 + Math.floor(rnd()*2);   // el mas
   }
+
+  // 6) la platja, en un tram de costa, amb para-sols i alguna barca: després ja es fa a mà
+  platjaAuto();
 }

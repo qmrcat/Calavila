@@ -12,13 +12,13 @@ Cal connexió a internet la primera vegada, perquè three.js es carrega des de l
 
 ## Com es juga
 
-Tria un mode al panell i clica sobre la quadrícula. Els modes van en dos grups: el primer, per fer el poble (**Cases**, **Carrers**, **Voltes**, **Pintar**, **Bars**), i el segon, per a les obres i el relleu (**Ponts**, **Molls**, **Fars**, **Escales**, **Muntanya**). En els modes que tenen condicions, la cel·la sota el cursor es pinta de verd si s'hi pot construir i de vermell si no.
+Tria un mode al panell i clica sobre la quadrícula. Els modes van en dos grups: el primer, per fer el poble (**Cases**, **Carrers**, **Voltes**, **Pintar**, **Bars**), i el segon, per a les obres i el relleu (**Ponts**, **Molls**, **Fars**, **Escales**, **Muntanya**, **Platja**). En els modes que tenen condicions, la cel·la sota el cursor es pinta de verd si s'hi pot construir i de vermell si no.
 
 | Mode | Què fa |
 |---|---|
 | **Cases** | A l'aigua, el primer clic fa el terreny i el segon, la casa. Després, cada clic hi afegeix un pis. Les cases veïnes de la mateixa alçada i del mateix color comparteixen teulada; si són de colors diferents, cadascuna fa la seva. |
 | **Carrers** | Pavimenta una cel·la. Si hi tornes a clicar, l'enlaires un nivell. |
-| **Voltes** | Fa una volta sobre un carrer que tingui cases de dos pisos o més a banda i banda. |
+| **Voltes** | Fa una volta sobre un carrer que tingui cases de dos pisos o més a banda i banda. Si cliques una casa, n'obre la planta baixa en un porxo (vegeu *Voltes i porxos*). |
 | **Pintar** | Canvia el color de la façana de les cases que ja hi ha. |
 | **Bars** | Fa un bar o un restaurant a la planta baixa d'una casa, amb terrassa si hi ha lloc (vegeu *Bars i restaurants*). |
 | **Ponts** | Posa un pont de pedra sobre un canal. Amb terra a una sola banda, fa d'embarcador. |
@@ -26,20 +26,37 @@ Tria un mode al panell i clica sobre la quadrícula. Els modes van en dos grups:
 | **Fars** | Posa un far on vulguis. A l'aigua, s'alça damunt d'un illot de roca; en un carrer, una plaça o un moll plans, s'hi aguanta a sobre. No en pot anar cap en una escala ni sota una volta. |
 | **Escales** | Posa una escala que puja un nivell des d'un lloc pla: un carrer, un terrat o el cap d'una altra escala (vegeu *Escales*). |
 | **Muntanya** | Fa terreny de roca. Si hi tornes a clicar, l'alça un nivell. Les roques veïnes fan muntanya, i a sobre s'hi poden fer cases (vegeu *Muntanya*). |
+| **Platja** | Fa platja d'arena a l'aigua arran de costa. Si hi tornes a clicar, hi posa un para-sol, unes gandules, una barca... (vegeu *Platja*). |
 
 ### Treure
 
 Per treure, fes clic amb el **botó dret**, sigui quin sigui el mode. Es treu el que hi ha més amunt de la cel·la, en aquest ordre:
 
 1. l'escala de sobre una casa;
-2. un pis de la casa (quan no en queden, hi torna a quedar el terreny);
+2. un pis de la casa (quan no en queden, hi torna a quedar el terreny). En mode **Voltes**, primer el porxo;
 3. la volta;
 4. el far;
 5. l'escala;
 6. el pont;
-7. un nivell del terreny, i a la fi el terreny mateix, que torna a ser aigua.
+7. el que hi ha a la platja, i després l'arena;
+8. un nivell del terreny, i a la fi el terreny mateix, que torna a ser aigua.
 
 <kbd>Maj</kbd>+clic i el botó **Treure** fan el mateix (al mòbil no hi ha botó dret). L'única excepció és el mode **Pintar**, on tornen la façana al color automàtic.
+
+### Voltes i porxos
+
+**Voltes:** clica el buit que hi ha entre dues cases enfrontades de dos pisos o més. La volta pren el color de la casa més baixa de les dues, que és on s'aguanta, i en comparteix la teulada. Si la pintes en mode **Pintar**, té el seu color i la seva teulada.
+
+**Porxos:** en mode **Voltes**, clica una casa de dos pisos o més i la seva planta baixa es torna un porxo obert, amb arcs i pilars de pedra. A sobre, la casa continua igual.
+
+- No cal que tingui cases al costat: un porxo sol s'aguanta amb quatre pilars.
+- Si en fas uns quants seguits, fan una galeria contínua. Així pots fer carrers i places porxats.
+- Cada casa amb porxo pot ser d'un color diferent, i cada color fa la seva teulada.
+- Si el porxo toca una casa normal, la façana d'aquella casa fa de paret del fons.
+- Per sota s'hi passa com per un carrer, al nivell del terreny on és la casa.
+- Al porxo no hi cap un bar, ni una escala a sobre de la casa.
+
+Per tancar un porxo, torna-hi a clicar en mode **Voltes**, o fes-hi clic amb el botó dret en aquest mode. Si treus pisos fins que en queda un de sol, el porxo també es perd.
 
 ### Bars i restaurants
 
@@ -96,6 +113,24 @@ El botó dret la baixa un nivell, i a nivell zero la torna aigua. Sobre la roca 
 
 Cada **Poble nou** té un turó de roca a tocar del poble, a l'altra banda de la platja, i de vegades un mas al cim.
 
+### Platja
+
+La platja ja no surt sola: és un terreny que es fa a mà, com el carrer o la muntanya. En mode **Platja** (tecla <kbd>L</kbd>), clica l'aigua arran de costa i s'hi fa arena. Ha de tocar terra, un carrer, un pont o una altra platja, i així pots fer-la tan ampla com vulguis. La platja fa pendent sola cap a l'aigua, i pels costats que donen al mar té un talús d'arena.
+
+Cada clic a la mateixa platja hi canvia el que hi ha a sobre, en aquest ordre:
+
+1. arena llisa;
+2. un para-sol amb una tovallola estesa;
+3. dues gandules mirant al mar, amb un para-sol al mig;
+4. un llaüt varat;
+5. un patí de vela;
+6. la cadira alta del socorrista, amb para-sol, la bandera verda i un salvavides;
+7. un castell de sorra, amb la galleda i la pala.
+
+Després del darrer, torna a ser arena llisa. Les coses es posen a la part més seca de la cel·la, i les que tenen davant i darrere miren cap al mar.
+
+El botó dret primer treu el que hi ha a sobre, i després l'arena. Si hi fas una casa, un carrer, un pont o un far, la platja se'n va. Cada **Poble nou** té una platja en un tram de costa, amb algun para-sol, gandules i barques. Les partides desades abans tenien la platja automàtica, i quan les obres, es torna a fer com sortia llavors.
+
 ### Mida de la cala
 
 A **Configuració** pots triar la mida de la quadrícula:
@@ -122,7 +157,7 @@ Al final del panell hi ha la secció **Configuració**, plegada: clica'n l'etiqu
 - **Construcció:** **Places auto.**, perquè els buits envoltats de cases es pavimentin sols.
 - **Hora del dia:** dia, nit o automàtic.
 - **Escena:** **Quadrícula** mostra o amaga la quadrícula sobre l'aigua, i **Gavines** les fa volar o les atura. Per defecte volen, i l'opció es recorda en aquest navegador.
-- **Festes:** **Guarniments de Nadal** guarneix el poble (vegeu *Nadal*). Per defecte està desactivat, i també es recorda en aquest navegador.
+- **Festes:** **Guarniments de Nadal** guarneix el poble (vegeu *Nadal*), **Diada** hi penja senyeres i estelades (vegeu *Diada*), **Festa Major** l'engalana i **Gegants** hi porta una trobada de gegants (vegeu *Festa Major*). Es poden activar alhora. Per defecte estan desactivats, i també es recorden en aquest navegador.
 - **Imatge de la vila:** **Descarrega** desa una imatge PNG del que es veu ara, sense el panell ni el ressaltat del cursor (`cala-AAAAMMDD-HHMM.png`). **Copia** la posa al porta-retalls, per enganxar-la en un missatge o un document. Si el navegador no deixa copiar imatges, ho diu, i llavors cal fer servir Descarrega.
 - **Partida:** desar, copiar i carregar partides (vegeu *Partides*).
 
@@ -147,6 +182,43 @@ Les parades es desen a la partida. Si desactives els guarniments, no es veuen ni
 
 Les llums de cada casa o carrer són blanques o de colors. De dia es veuen apagades, i de nit s'encenen. Quines cases, carrers i places es guarneixen depèn de cada cel·la: sempre són les mateixes. L'opció de guarnir no es desa a la partida, però les parades del mercat sí.
 
+### Diada
+
+Amb **Diada** activat, com l'Onze de Setembre, més o menys un 45 % de les cases pengen la senyera o l'estelada (meitat i meitat, més o menys):
+
+- **Balcons:** la bandera penja per davant de la barana.
+- **Finestres:** penja de l'ampit, sobre la façana.
+- **Terrats:** en un pal, en un racó del terrat. Les torres de guaita també en tenen una al capdamunt.
+
+Cada casa en penja una, i les més grans, de vegades, dues. Primer es tria un balcó o el terrat, i si no n'hi ha, una finestra. Una casa d'un sol pis la penja d'una finestra de la planta baixa, més curta perquè no toqui el carrer. Una casa de dins de l'illa, sense cap façana a fora, la penja d'un pal al capdamunt de la teulada.
+
+Les banderes dels pals onegen totes cap al mateix costat, com si fes vent. Quines cases en pengen, quina bandera i on depèn de cada cel·la: sempre són les mateixes. Es pot activar alhora que els guarniments de Nadal. L'opció no es desa a la partida.
+
+### Festa Major
+
+Amb **Festa Major** activat:
+
+- **Damassos:** més o menys un 30 % dels balcons tenen un damàs penjat de la barana. Són granats, vermells, blaus o de color crema, amb la vora i un rombe al mig, d'or o de color, i serrell a baix.
+- **Banderetes:** els carrers que passen entre dues cases prou altes tenen dues tires de banderetes de colors d'una façana a l'altra.
+
+Funciona amb les altres dues festes:
+
+- **Nadal:** els llums de Nadal van al mig del carrer, i les banderetes, a banda i banda.
+- **Diada:** un balcó que té damàs no hi penja la bandera; la casa la posa en un altre lloc.
+
+Quins balcons i carrers s'engalanen depèn de cada cel·la: sempre són els mateixos. L'opció no es desa a la partida.
+
+#### Gegants
+
+Els gegants tenen el seu propi botó, **Gegants**, a **Configuració → Festes**. Per defecte està apagat, i es recorda en aquest navegador. No depèn de la Festa Major: es poden treure els gegants amb la festa o sense.
+
+Tots van junts, com en una trobada de gegants:
+
+- **On:** a la plaça on hi ha més carrer pla al voltant, i a les cel·les planes del costat.
+- **Quants:** dos a cada cel·la, el rei i la reina amb corona d'or, i com a molt 8. Si la plaça és petita, n'hi ha menys.
+- **Com:** tots miren cap al mig del grup.
+- **Amb Nadal:** no es posen on hi ha un arbre de Nadal.
+
 ### Dreceres de teclat
 
 | Tecla | Acció |
@@ -154,6 +226,7 @@ Les llums de cada casa o carrer són blanques o de colors. De dia es veuen apaga
 | <kbd>1</kbd>–<kbd>4</kbd> | Cases, Carrers, Voltes, Pintar |
 | <kbd>5</kbd>–<kbd>9</kbd> | Ponts, Molls, Fars, Escales, Muntanya |
 | <kbd>B</kbd> | Bars i restaurants |
+| <kbd>L</kbd> | Platja |
 | <kbd>0</kbd> | Mercat de Nadal (amb els guarniments activats) |
 | <kbd>X</kbd> | Activa o desactiva *Treure* |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> · <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>Z</kbd> | Desfés · refés |
@@ -170,9 +243,10 @@ Les llums de cada casa o carrer són blanques o de colors. De dia es veuen apaga
   - Balcons de forja, portes amb arc i sòcol pintat.
   - Buguenvíl·lees que s'enfilen per les façanes.
   - Xemeneies, terrats amb pèrgola i cantonades arrodonides.
+- **Voltes i porxos:** voltes entre cases enfrontades, i cases amb la planta baixa porxada per fer carrers i places amb porxos.
 - **Torres:** una casa alta i aïllada es converteix en un campanar o en una torre de guaita amb merlets.
 - **Places automàtiques:** un buit envoltat de tres cases es pavimenta sol, amb testos, bancs, fanals i arbres (xiprers, pins pinyoners i oliveres). Entre dos fanals sempre hi ha com a mínim una cel·la, també als molls i als ponts.
-- **Platja:** a cada cala, un tram de costa té arena, para-sols i alguna barca varada.
+- **Platja:** feta a mà, amb para-sols, gandules, llaüts, patins de vela, la cadira del socorrista i castells de sorra.
 - **Canals i ports:**
   - Ponts de pedra amb esquena d'ase.
   - Molls de carreus amb norais, caixes de peix i xarxes.
@@ -183,6 +257,8 @@ Les llums de cada casa o carrer són blanques o de colors. De dia es veuen apaga
   - De nit hi ha estrelles i lluna, i s'encenen les finestres, els fanals i els fars.
   - El mode automàtic fa passar un dia sencer en 6 minuts.
 - **Muntanyes de roca** amb pendents, mates i pins, on també es pot construir.
+- **La Diada** opcional, amb senyeres i estelades als balcons, les finestres i els terrats.
+- **La Festa Major** opcional, amb damassos als balcons i banderetes als carrers, i una trobada de gegants a la plaça.
 - **Guarniments de Nadal** opcionals: garlandes, llums als carrers, arbres a les places i un mercat de Nadal que pots fer créixer.
 - **Gavines** que volten la cala. Les pots aturar a **Configuració**.
 
@@ -194,7 +270,7 @@ La partida es desa sola al navegador (`localStorage`). Amb el botó **Partida…
 - baixar-la com a fitxer `.cala`,
 - carregar-ne una d'enganxada o d'un fitxer.
 
-Una partida és una sola línia de text, i ocupa uns quants kB. Conté la llavor i la mida de la cala, que és determinista i es torna a generar igual, i un caràcter per cel·la per a cada camp. Les partides desades amb versions anteriors (sense ponts, molls, mida, fars, escales, roca, mercat o bars) es continuen carregant.
+Una partida és una sola línia de text, i ocupa uns quants kB. Conté la llavor i la mida de la cala, que és determinista i es torna a generar igual, i un caràcter per cel·la per a cada camp. Les partides desades amb versions anteriors (sense ponts, molls, mida, fars, escales, roca, mercat, bars, porxos o platja) es continuen carregant.
 
 ## Estructura del codi
 
@@ -205,11 +281,13 @@ js/
   base.js              utilitats, paleta de colors i mides
   quadricula.js        la quadrícula irregular
   geometria.js         parets, finestres, vegetació, mobiliari, torres
-  platja-ponts.js      platja i ponts
+  platja-ponts.js      platja (l'arena i el que hi ha a sobre) i ponts
   port.js              molls, norais, fars, illots i barques amarrades
   muntanya.js          terreny de roca, amb pendents i vegetació
   nadal.js             guarniments de Nadal: llums, arbres i mercat
   bars.js              bars i restaurants, amb la seva terrassa
+  diada.js             la Diada: senyeres i estelades a balcons, finestres i terrats
+  festa.js             la Festa Major: damassos, banderetes i gegants
   cobertes-carrers.js  cantonades, voltes, cobertes, carrers i escales
   poble.js             estat del poble, anàlisi i construcció de la malla
   escena.js            llums, mar, barques, gavines, dia i nit

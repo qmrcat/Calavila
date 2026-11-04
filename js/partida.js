@@ -20,7 +20,7 @@ function serialitza(){
   };
   return [MARCA, seed, n, autoPlaces ? 1 : 0,
           enc(heights,0), enc(carrer,0), enc(nivell,0), enc(forcat,0), enc(tint,1), enc(pont,0),
-          enc(moll,0), midaCala, enc(fars,0), enc(escales,0), enc(roca,0), enc(mercat,0), enc(bar,0)].join('|');
+          enc(moll,0), midaCala, enc(fars,0), enc(escales,0), enc(roca,0), enc(mercat,0), enc(bar,0), enc(porxo,0), enc(platja,0)].join('|');
 }
 
 function deserialitza(txt){
@@ -29,11 +29,11 @@ function deserialitza(txt){
   const sd = +p[1], n = +p[2];
   if(p.length < 9 || !Number.isInteger(sd) || !Number.isInteger(n) || n < 1) throw new Error('Capçalera malmesa.');
   // els camps dels ponts (10è), dels molls (11è), de la mida (12è), dels fars (13è), de les escales (14è)
-  // de la roca (15è), del mercat de Nadal (16è) i dels bars (17è) són posteriors: les partides antigues no els tenen. Tots tenen un caràcter per
+  // de la roca (15è), del mercat de Nadal (16è), dels bars (17è), dels porxos (18è) i de la platja (19è) són posteriors: les partides antigues no els tenen. Tots tenen un caràcter per
   // cel·la, menys la mida
   const nCamps = Math.min(p.length, 11);
   for(let k=4;k<nCamps;k++) if(p[k].length !== n) throw new Error('Les dades no quadren amb el nombre de cel·les.');
-  for(let k=12;k<Math.min(p.length, 17);k++) if(p[k].length !== n) throw new Error('Les dades no quadren amb el nombre de cel·les.');
+  for(let k=12;k<Math.min(p.length, 19);k++) if(p[k].length !== n) throw new Error('Les dades no quadren amb el nombre de cel·les.');
   const mida = p.length >= 12 ? p[11] : 'normal';
   if(!esMida(mida)) throw new Error('Mida de cala desconeguda.');
 
@@ -56,6 +56,8 @@ function deserialitza(txt){
   const ro = p.length >= 15 ? dec(p[14], 0, 1) : new Array(n).fill(0);
   const me = p.length >= 16 ? dec(p[15], 0, 1) : new Array(n).fill(0);
   const ba = p.length >= 17 ? dec(p[16], 0, 2) : new Array(n).fill(0);
+  const px = p.length >= 18 ? dec(p[17], 0, 1) : new Array(n).fill(0);
+  const pl = p.length >= 19 ? dec(p[18], 0, PLATJA_MAX) : null;
 
   let noves = null;                                 // la cala és determinista
   if(sd !== seed || mida !== midaCala || cells.length !== n){
@@ -76,7 +78,11 @@ function deserialitza(txt){
   roca    = ro;
   mercat  = me;
   bar     = ba;
+  porxo   = px;
   autoPlaces = p[3] === '1';
+  // abans la platja sortia sola: a les partides antigues es torna a fer com llavors
+  if(pl) platja = pl;
+  else { platja = new Array(n).fill(0); platjaAuto(); }
 }
 
 // deserialitza() només toca l'estat; els botons es posen al dia a part

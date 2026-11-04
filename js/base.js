@@ -15,6 +15,8 @@
      muntanya.js          terreny de roca, amb pendents i vegetació
      nadal.js             guarniments de Nadal: llums, arbres i mercat
      bars.js              bars i restaurants, amb la seva terrassa
+     diada.js             la Diada: senyeres i estelades a balcons, finestres i terrats
+     festa.js             la Festa Major: damassos, banderetes i gegants
      cobertes-carrers.js  cantonades, voltes, cobertes, carrers i escales
      poble.js             estat del poble, anàlisi i construcció de la malla
      escena.js            llums, mar, barques, gavines, dia i nit

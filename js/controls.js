@@ -16,11 +16,12 @@ function marcarHover(ci){
   if(ci < 0){ hoverMesh.visible = false; return; }
   const treu = modeTreure || majPremuda;
   // en els modes que tenen condicions, verd si es pot i vermell si no
-  const valid = mode === 'volta' ? potVolta(ci) : mode === 'pont' ? (pont[ci] > 0 || eixPont(ci) > 0)
+  const valid = mode === 'volta' ? (heights[ci] > 0 ? potPorxo(ci) : potVolta(ci)) : mode === 'pont' ? (pont[ci] > 0 || eixPont(ci) > 0)
               : mode === 'moll' ? (moll[ci] > 0 || potMoll(ci))
               : mode === 'far' ? (fars[ci] > 0 || potFar(ci))
               : mode === 'escala' ? (escalaE[ci] >= 0 || sentitsEscala(ci).length > 0)
               : mode === 'roca' ? potRoca(ci)
+              : mode === 'platja' ? (esSorra[ci] || potPlatja(ci))
               : mode === 'mercat' ? (mercat[ci] > 0 || potMercat(ci))
               : mode === 'bar' ? potBar(ci) : null;
   hoverMesh.material.color.setHex(treu ? 0xd4704f : valid === null ? 0xffffff : valid ? 0x6fd39a : 0xd4704f);
@@ -148,7 +149,13 @@ cv.addEventListener('pointerup', e=>{
         else { tint[ci] = treure ? -1 : colSel; avis(''); }
       } else if(mode === 'volta'){
         if(heights[ci] > 0){
-          avis('Aquí hi ha una casa. Treu-la primer amb el botó dret.');
+          // a una casa: la planta baixa es fa porxo, o es torna a tancar
+          if(!potPorxo(ci)) avis('Per fer-hi un porxo, la casa ha de tenir dos pisos o més: a baix el porxo i a dalt l\'habitatge.');
+          else if(porxo[ci]){ porxo[ci] = 0; avis('Porxo tancat.'); }
+          else {
+            porxo[ci] = 1; bar[ci] = 0; escales[ci] = 0;   // al porxo no hi cap un bar, ni a sobre una escala
+            avis('Porxo fet. Fes-ne al costat, del color que vulguis, per tenir un carrer o una plaça porxats.');
+          }
         } else if(!potVolta(ci)){
           avis('Cal una casa de dos pisos o més a cada banda, i que estiguin enfrontades (no en cantonada).');
         } else { forcat[ci] = true; pont[ci] = 0; fars[ci] = 0; escales[ci] = 0; avis(''); }
@@ -177,7 +184,7 @@ cv.addEventListener('pointerup', e=>{
       } else if(mode === 'escala'){
         const op = sentitsEscala(ci);
         if(pont[ci]) avis('Aquí hi ha un pont. Treu-lo primer amb el botó dret.');
-        else if(span[ci] || forcat[ci]) avis('Sota una volta no hi cap una escala.');
+        else if(span[ci] || forcat[ci]) avis(heights[ci] > 0 ? 'Sobre una casa amb porxo no hi cap una escala.' : 'Sota una volta no hi cap una escala.');
         else if(escales[ci]){
           // una altra vegada a la mateixa escala: la gira cap al sentit següent que es pugui
           const i = op.findIndex(o => o.e === escales[ci] - 1);
@@ -195,7 +202,7 @@ cv.addEventListener('pointerup', e=>{
       } else if(mode === 'bar'){
         // la planta baixa d'una casa es torna un bar o un restaurant; un altre clic els canvia
         if(!(heights[ci] > 0)) avis('Clica una casa: el bar o el restaurant es fa a la planta baixa.');
-        else if(span[ci]) avis('Sota una volta no hi cap un bar.');
+        else if(span[ci]) avis('Aquesta casa té porxo: la planta baixa és oberta. Tanca\'l en mode Voltes.');
         else if(!potBar(ci)) avis('Aquesta casa no té cap façana a la planta baixa: totes donen a altres cases.');
         else {
           bar[ci] = bar[ci] ? 3 - bar[ci] : (hash3(ci, 325, 1) < 0.5 ? 1 : 2);
@@ -217,6 +224,17 @@ cv.addEventListener('pointerup', e=>{
           mercat[ci] = 1; fars[ci] = 0; forcat[ci] = false;
           avis('');
         }
+      } else if(mode === 'platja'){
+        // a l'aigua arran de costa fa l'arena; a la platja, cada clic hi canvia el que hi ha a sobre
+        if(esSorra[ci]){
+          platja[ci] = platja[ci] % PLATJA_MAX + 1;
+          avis(platja[ci] === 1 ? 'Arena llisa. Torna-hi a clicar per posar-hi alguna cosa.'
+               : 'Ara hi ha ' + ELEMENTS_PLATJA[platja[ci]] + '. Torna-hi a clicar per canviar-ho.');
+        } else if(heights[ci] > 0 || carrer[ci] || esCarrer[ci]) avis('Aquí ja hi ha terra. La platja es fa a l\'aigua, arran de costa.');
+        else if(pont[ci]) avis('Aquí hi ha un pont. Treu-lo primer amb el botó dret.');
+        else if(fars[ci]) avis('Aquí hi ha un far. Treu-lo primer amb el botó dret.');
+        else if(!potPlatja(ci)) avis('La platja ha de tocar terra, un carrer o una altra platja.');
+        else { platja[ci] = 1; avis('Platja feta. Torna-hi a clicar per posar-hi un para-sol, unes gandules, una barca...'); }
       } else if(mode === 'roca'){
         if(heights[ci] > 0) avis('Aquí hi ha una casa. La roca es fa al costat; o treu-la primer amb el botó dret.');
         else if(pont[ci]) avis('Aquí hi ha un pont. Treu-lo primer amb el botó dret.');
@@ -258,6 +276,8 @@ cv.addEventListener('pointerup', e=>{
           avis('');
         }
       }
+      // si s'hi ha fet terra, un pont o un far, la platja de sota se'n va
+      if(platja[ci] && (heights[ci] > 0 || carrer[ci] || pont[ci] || fars[ci])) platja[ci] = 0;
       construirMalla();
       if(enlairat >= 0) avisaAcces(enlairat);
       instantania();
@@ -266,13 +286,15 @@ cv.addEventListener('pointerup', e=>{
   }
 });
 // Treu l'element de més amunt de la cel·la, sigui quin sigui el mode: l'escala de sobre una casa,
-// un pis de la casa, la volta, el far, l'escala, el pont, i a la fi el terreny, nivell a nivell
+// un pis de la casa (o, en mode Voltes, el porxo), la volta, el far, l'escala, el pont, i a la fi el terreny, nivell a nivell
 function treuElement(ci){
   avis('');
   if(escales[ci] && heights[ci] > 0){ escales[ci] = 0; return; }
   if(mode === 'bar' && bar[ci] && heights[ci] > 0){ bar[ci] = 0; return; }   // en mode Bars, primer el bar
+  if(mode === 'volta' && porxo[ci] && heights[ci] > 0){ porxo[ci] = 0; return; }   // en mode Voltes, primer el porxo
   if(heights[ci] > 0){
     heights[ci]--;
+    if(heights[ci] < 2) porxo[ci] = 0;   // amb un sol pis ja no hi cap el porxo
     if(heights[ci] === 0){ bar[ci] = 0; if(!carrer[ci]) nivell[ci] = 0; }
     return;
   }
@@ -281,6 +303,7 @@ function treuElement(ci){
   if(mercat[ci] && nadal){ mercat[ci] = 0; return; }   // sense guarniments no es veu: no es treu d'amagat
   if(escales[ci]){ escales[ci] = 0; return; }
   if(pont[ci]){ pont[ci] = 0; return; }
+  if(platja[ci]){ platja[ci] = platja[ci] > 1 ? 1 : 0; return; }   // primer el que hi ha a sobre, i després l'arena
   if(carrer[ci]){
     if(nivell[ci] > 0) nivell[ci]--;
     else { carrer[ci] = false; moll[ci] = 0; roca[ci] = 0; mercat[ci] = 0; }
@@ -316,7 +339,7 @@ addEventListener('resize', ()=>{
 /* ---------- 8. Botons ---------- */
 
 const botons = {casa:'m-casa', carrer:'m-carrer', volta:'m-volta', pintar:'m-pintar', bar:'m-bar',
-                pont:'m-pont', moll:'m-moll', far:'m-far', escala:'m-escala', roca:'m-roca', mercat:'m-mercat'};
+                pont:'m-pont', moll:'m-moll', far:'m-far', escala:'m-escala', roca:'m-roca', platja:'m-platja', mercat:'m-mercat'};
 function posaMode(m){
   mode = m;
   for(const k in botons){
@@ -324,7 +347,7 @@ function posaMode(m){
     b.classList.toggle('on', k === m);
     b.setAttribute('aria-pressed', k === m);
   }
-  avis(m === 'volta' ? 'Clica el buit que hi ha entre dues cases enfrontades de dos pisos o més.'
+  avis(m === 'volta' ? 'Clica el buit entre dues cases enfrontades de dos pisos o més per fer-hi una volta, o clica una casa de dos pisos o més per porxar-ne la planta baixa.'
      : m === 'pintar' ? 'Tria un color i clica les cases. Amb Treure (o Maj+clic) tornen a automàtic.'
      : m === 'pont' ? 'Deixa aigua entre cases per fer un canal i clica-hi per posar-hi un pont. En verd, on es pot.'
      : m === 'moll' ? 'Clica l\'aigua que toca la costa per fer-hi un moll. A la punta d\'un moll hi surt un far, i a l\'aigua del costat, barques amarrades.'
@@ -333,6 +356,7 @@ function posaMode(m){
      : m === 'bar' ? 'Clica una casa per fer-ne un bar o un restaurant a la planta baixa. Si al davant hi ha dues cel·les buides, surt amb terrassa.'
      : m === 'mercat' ? 'Clica un carrer o una plaça plans per posar-hi una parada. Clica les cel·les del costat per fer créixer el mercat.'
      : m === 'roca' ? 'Clica l\'aigua o un carrer per fer-hi roca, i torna-hi a clicar per alçar-la. Les roques veïnes fan muntanya, i a sobre s\'hi poden fer cases.'
+     : m === 'platja' ? 'Clica l\'aigua arran de costa per fer-hi platja. Clicant la platja, hi poses un para-sol, unes gandules, un llaüt, un patí de vela, la cadira del socorrista o un castell de sorra.'
      : '');
   if(hoverCi >= 0) marcarHover(hoverCi);
 }
@@ -365,6 +389,7 @@ addEventListener('keydown', e=>{
   if(k >= '1' && k <= '9' && k.length === 1) posaMode(modes[+k - 1]);
   if(k === '0' && nadal) posaMode('mercat');
   if(k === 'b') posaMode('bar');
+  if(k === 'l') posaMode('platja');
   if(k === 'x') posaTreure(!modeTreure);
   if(k === 'g') posaGrid(!mostraGrid);
   if(k === 'p') posaPlaces(!autoPlaces);
@@ -457,7 +482,7 @@ function posaMida(m){
 }
 for(const k in botonsMida) document.getElementById(botonsMida[k]).onclick = ()=>posaMida(k);
 document.getElementById('btn-buida').onclick = ()=>{
-  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0); mercat.fill(0); bar.fill(0);
+  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0); mercat.fill(0); bar.fill(0); porxo.fill(0); platja.fill(0);
   construirMalla(); instantania();
   avis('Cala buidada. Es pot desfer amb ↶.');
 };
@@ -512,6 +537,54 @@ document.getElementById('btn-nadal').onclick = ()=>posaNadal(!nadal);
   let v = null;
   try{ v = localStorage.getItem('cala:nadal'); } catch(e){}
   posaNadal(v === '1', true);   // per defecte, sense; la malla es fa en arrencar
+}
+
+/* --- la Diada: com els guarniments de Nadal, es recorda en aquest navegador --- */
+function posaDiada(v, sensemalla){
+  diada = v;
+  const b = document.getElementById('btn-diada');
+  b.classList.toggle('on', v);
+  b.setAttribute('aria-pressed', v);
+  try{ localStorage.setItem('cala:diada', v ? '1' : '0'); } catch(e){}
+  if(!sensemalla) construirMalla();
+}
+document.getElementById('btn-diada').onclick = ()=>posaDiada(!diada);
+{
+  let v = null;
+  try{ v = localStorage.getItem('cala:diada'); } catch(e){}
+  posaDiada(v === '1', true);   // per defecte, sense; la malla es fa en arrencar
+}
+
+/* --- la Festa Major: com Nadal i la Diada, es recorda en aquest navegador --- */
+function posaFesta(v, sensemalla){
+  festa = v;
+  const b = document.getElementById('btn-festa');
+  b.classList.toggle('on', v);
+  b.setAttribute('aria-pressed', v);
+  try{ localStorage.setItem('cala:festa', v ? '1' : '0'); } catch(e){}
+  if(!sensemalla) construirMalla();
+}
+document.getElementById('btn-festa').onclick = ()=>posaFesta(!festa);
+{
+  let v = null;
+  try{ v = localStorage.getItem('cala:festa'); } catch(e){}
+  posaFesta(v === '1', true);   // per defecte, sense; la malla es fa en arrencar
+}
+
+/* --- els gegants: també es recorden en aquest navegador --- */
+function posaGegants(v, sensemalla){
+  ambGegants = v;
+  const b = document.getElementById('btn-gegants');
+  b.classList.toggle('on', v);
+  b.setAttribute('aria-pressed', v);
+  try{ localStorage.setItem('cala:gegants', v ? '1' : '0'); } catch(e){}
+  if(!sensemalla) construirMalla();
+}
+document.getElementById('btn-gegants').onclick = ()=>posaGegants(!ambGegants);
+{
+  let v = null;
+  try{ v = localStorage.getItem('cala:gegants'); } catch(e){}
+  posaGegants(v === '1', true);   // per defecte, sense; la malla es fa en arrencar
 }
 
 /* --- dia, nit o automàtic --- */

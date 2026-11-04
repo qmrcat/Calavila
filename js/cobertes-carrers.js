@@ -47,18 +47,35 @@ function tapaCanto(G, P, cv, y, amunt, col){  // omple el sector que deixa la co
 
 const corbaArc = t => ARC_YS + (ARC_YC-ARC_YS)*Math.sqrt(Math.max(0, 1-(2*t-1)*(2*t-1)));
 
-function arcada(G, cel, ci, col){
-  const p = cel.p, nb = cel.nb;
-  const obert = [0,1,2,3].map(e => !(nb[e] >= 0 && heights[nb[e]] > 0));
+// pilars dels porxos: mig gruix del fust i del capitell. L'arc arrenca de la vora del capitell
+const PILAR_W = 0.085, PILAR_CAP = 0.115;
+
+// la planta baixa d'una volta (entre dues cases) o d'una casa amb porxo, al nivell Lb:
+// arcs a les cares obertes, volta de canó si n'hi ha dues d'enfrontades i, al porxo, pilars
+function arcada(G, cel, ci, col, Lb = 0){
+  const p = cel.p, nb = cel.nb, y = Lb*ALT;
+  const obert = [0,1,2,3].map(e => !ocupat(nb[e], Lb));   // a un altre porxo també és obert: fan galeria
+  const ambPilars = heights[ci] > 0;
+
+  // punts de la corba de l'arc sobre l'aresta A-B: [punt, alçada]. Al porxo, l'arc no arrenca del
+  // vèrtex sinó de la vora del capitell; fins allà, el timpà s'assenta pla sobre el capitell.
+  // Totes les arestes tenen el mateix nombre de punts i les mateixes alçades: la volta de canó
+  // uneix els de dues arestes enfrontades
+  const corba = (A, B) => {
+    const out = [];
+    const a = ambPilars ? Math.min(0.2, PILAR_CAP / (Math.hypot(B.x-A.x, B.z-A.z) || 1)) : 0;
+    if(ambPilars) out.push([A, ARC_YS]);
+    for(let k=0;k<=ARC_K;k++){ const t = a + (1-2*a)*k/ARC_K; out.push([entre(A,B,t), corbaArc(k/ARC_K)]); }
+    if(ambPilars) out.push([B, ARC_YS]);
+    return out;
+  };
 
   for(let e=0;e<4;e++){                       // timpans
     if(!obert[e]) continue;
-    const A = p[e], B = p[(e+1)%4];
-    for(let k=0;k<ARC_K;k++){
-      const t0 = k/ARC_K, t1 = (k+1)/ARC_K;
-      const y0 = corbaArc(t0), y1 = corbaArc(t1);
-      const P0 = entre(A,B,t0), P1 = entre(A,B,t1);
-      quad(G, [P0.x,y0,P0.z], [P1.x,y1,P1.z], [P1.x,ALT,P1.z], [P0.x,ALT,P0.z], col);
+    const c = corba(p[e], p[(e+1)%4]);
+    for(let k=0;k<c.length-1;k++){
+      const [P0, h0] = c[k], [P1, h1] = c[k+1];
+      quad(G, [P0.x,y+h0,P0.z], [P1.x,y+h1,P1.z], [P1.x,y+ALT,P1.z], [P0.x,y+ALT,P0.z], col);
     }
   }
 
@@ -67,16 +84,31 @@ function arcada(G, cel, ci, col){
   else if(obert[1] && obert[3]) eix = 1;
 
   if(eix >= 0){                               // volta de canó
-    const A = p[eix], B = p[(eix+1)%4], D = p[(eix+3)%4], E = p[(eix+2)%4];
-    for(let k=0;k<ARC_K;k++){
-      const t0 = k/ARC_K, t1 = (k+1)/ARC_K;
-      const y0 = corbaArc(t0), y1 = corbaArc(t1);
-      const P0 = entre(A,B,t0), P1 = entre(A,B,t1);
-      const Q0 = entre(D,E,t0), Q1 = entre(D,E,t1);
-      quad(G, [Q0.x,y0,Q0.z], [Q1.x,y1,Q1.z], [P1.x,y1,P1.z], [P0.x,y0,P0.z], col);
+    const cP = corba(p[eix], p[(eix+1)%4]), cQ = corba(p[(eix+3)%4], p[(eix+2)%4]);
+    for(let k=0;k<cP.length-1;k++){
+      const [P0, h0] = cP[k], [P1, h1] = cP[k+1], [Q0] = cQ[k], [Q1] = cQ[k+1];
+      quad(G, [Q0.x,y+h0,Q0.z], [Q1.x,y+h1,Q1.z], [P1.x,y+h1,P1.z], [P0.x,y+h0,P0.z], col);
     }
-  } else {                                    // porxo: sostre pla
-    quad(G, [p[3].x,ALT,p[3].z], [p[2].x,ALT,p[2].z], [p[1].x,ALT,p[1].z], [p[0].x,ALT,p[0].z], col);
+  } else {                                    // sostre pla
+    const t = y + ALT;
+    quad(G, [p[3].x,t,p[3].z], [p[2].x,t,p[2].z], [p[1].x,t,p[1].z], [p[0].x,t,p[0].z], col);
+  }
+
+  // casa amb porxo: un pilar de pedra a cada cantó d'on arrenca algun arc. Entre dos porxos
+  // veïns el pilar és compartit i es fa un sol cop
+  if(!ambPilars) return;
+  const terra = (nvC[ci] ? nvC[ci][0] : Lb)*ALT + CARRER_Y, w = PILAR_W, cap = PILAR_CAP;
+  for(let i=0;i<4;i++){
+    if(!obert[i] && !obert[(i+3)%4]) continue;
+    const v = cel.vi[i];
+    if(PILARS.has(v)) continue;
+    PILARS.add(v);
+    const A = p[i], B = p[(i+1)%4], l = Math.hypot(B.x-A.x, B.z-A.z) || 1;
+    const ux = (B.x-A.x)/l, uz = (B.z-A.z)/l;
+    caixa(G, A.x, A.z, ux, uz, w*1.25, w*1.25, terra, terra + 0.06, PEDRA);            // basa
+    caixa(G, A.x, A.z, ux, uz, w, w, terra + 0.06, y + ARC_YS - 0.06, PEDRA);           // fust
+    caixa(G, A.x, A.z, ux, uz, w*1.12, w*1.12, y + ARC_YS - 0.06, y + ARC_YS - 0.035, PEDRA);   // collarí
+    caixa(G, A.x, A.z, ux, uz, cap, cap, y + ARC_YS - 0.035, y + ARC_YS, PEDRA);        // capitell
   }
 }
 
@@ -85,7 +117,8 @@ function arcada(G, cel, ci, col){
    ------------------------------------------------------------
    Les cel·les veïnes que acaben a la mateixa alçada i tenen el
    mateix color de façana (el mateix tint, o totes dues
-   automàtiques) formen una regió i comparteixen una sola
+   automàtiques; una volta sense pintar compta amb el de la casa on
+   s'aguanta) formen una regió i comparteixen una sola
    teulada. Si el color és diferent, cada casa fa la seva. L'alçada de cada punt
    de la teulada depèn de la distància del vèrtex a la vora de
    la regió (0, 1, 2, 3 anells): un bloc solt fa una piràmide,
@@ -101,12 +134,12 @@ function cobertes(G){
   for(let ci=0; ci<n; ci++){
     if(heff[ci] <= 0 || vista[ci] || escalaE[ci] >= 0) continue;   // una escala a sobre fa de coberta
     // només s'ajunten les del mateix color: una casa pintada d'un altre color és un edifici a part
-    const h = heff[ci], color = tint[ci], pila = [ci], membres = [ci];
+    const h = heff[ci], color = tintEf(ci), pila = [ci], membres = [ci];
     vista[ci] = true;
     while(pila.length){
       const a = pila.pop();
       for(const b of cells[a].nb){
-        if(b >= 0 && !vista[b] && heff[b] === h && escalaE[b] < 0 && tint[b] === color){ vista[b] = true; pila.push(b); membres.push(b); }
+        if(b >= 0 && !vista[b] && heff[b] === h && escalaE[b] < 0 && tintEf(b) === color){ vista[b] = true; pila.push(b); membres.push(b); }
       }
     }
     // L'estil de la coberta (teula o terrat, color, xemeneia) surt d'una casa del mateix
@@ -168,7 +201,12 @@ function ferCoberta(G, llista, h, clau){
   const vora_ = (ci,e) => { const b = cells[ci].nb[e]; return !(b >= 0 && dins.has(b)); };
 
   const torre = llista.length === 1 ? tipusTorre[llista[0]] : null;
-  if(torre === 'guaita'){ merlets(G, llista[0], y); return; }
+  if(torre === 'guaita'){
+    merlets(G, llista[0], y);
+    const c = cells[llista[0]].c;                 // per la Diada, la bandera al cim de la torre
+    apuntaDiada(llista[0], 0, () => banderaPal(G, c.x, y, c.z, 0.9, llista[0]));
+    return;
+  }
 
   // terrat comú: a l'atzar, o perquè hi arrenca o hi arriba una escala
   if(llista.some(m => terratForcat[m]) || (!torre && hash3(clau, 9, 2) < 0.24)){
@@ -192,6 +230,10 @@ function ferCoberta(G, llista, h, clau){
       if(hc > 0.82)      arbre(G, cc.x, y, cc.z, 0.55, ci);
       else if(hc > 0.64) test(G, cc.x, y, cc.z, ci, 1.3);
       else if(hc < 0.12) pergola(G, ci, y);
+      apuntaDiada(ci, 0.15, () => {               // per la Diada, un pal amb la bandera en un racó del terrat
+        const p = entre(cells[ci].c, cells[ci].p[Math.floor(hash3(ci, 407, 1)*4)], 0.55);
+        banderaPal(G, p.x, y, p.z, 0.8, ci);
+      });
     }
     return;
   }
@@ -207,6 +249,9 @@ function ferCoberta(G, llista, h, clau){
       // cada aiguavés amb un to lleugerament diferent: les teules no són mai iguals
       tri(G, [a.x,Y[k],a.z], [b.x,Y[(k+1)%4],b.z], [cc.x,cy,cc.z], clar(teu, 0.92 + hash3(ci,k,77)*0.14));
     }
+    // per la Diada, si la casa no té cap altre lloc on penjar la bandera (una casa de dins
+    // de l'illa, sense façanes a fora), un pal al capdamunt de la teulada
+    if(!cim) apuntaDiada(ci, 1.5, () => banderaPal(G, cc.x, cy - 0.04, cc.z, 0.6, ci));
     for(let e=0;e<4;e++){                      // fascia del ràfec
       if(!vora_(ci,e)) continue;
       const a = P[e], b = P[(e+1)%4];

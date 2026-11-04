@@ -25,7 +25,7 @@
   <div class="seg" role="group" aria-label="Construir el poble">
     <button id="m-casa" class="on" aria-pressed="true" title="Cases (1)">Cases</button>
     <button id="m-carrer" aria-pressed="false" title="Carrers (2)">Carrers</button>
-    <button id="m-volta" aria-pressed="false" title="Voltes (3)">Voltes</button>
+    <button id="m-volta" aria-pressed="false" title="Voltes entre cases, o porxos a la planta baixa d'una casa (3)">Voltes</button>
     <button id="m-pintar" aria-pressed="false" title="Pintar (4)">Pintar</button>
     <button id="m-bar" aria-pressed="false" title="Bars i restaurants a la planta baixa d'una casa (B)">Bars</button>
   </div>
@@ -35,6 +35,7 @@
     <button id="m-far" aria-pressed="false" title="Fars, a l'aigua o en un carrer (7)">Fars</button>
     <button id="m-escala" aria-pressed="false" title="Escales que pugen un nivell (8)">Escales</button>
     <button id="m-roca" aria-pressed="false" title="Muntanya de roca, on també es pot construir (9)">Muntanya</button>
+    <button id="m-platja" aria-pressed="false" title="Platja d'arena arran de costa; clicant-la, para-sols, gandules, barques... (L)">Platja</button>
   </div>
   <div class="seg seg-2" id="grup-nadal" role="group" aria-label="Nadal" hidden>
     <button id="m-mercat" aria-pressed="false" title="Parades del mercat de Nadal, que creix a les cel·les del costat (0)">Mercat de Nadal</button>
@@ -50,6 +51,7 @@
   <p class="nota">
     El color triat s'aplica al que construeixes; amb <em>Pintar</em> el poses a cases ja fetes.
     Amb <em>Places auto.</em> (a <em>Configuració</em>), tot buit voltat de tres cases es pavimenta sol.
+    En mode <em>Voltes</em>, clica una casa de dos pisos o més per porxar-la.
     Clica dos cops un carrer per enlairar-lo un nivell; per pujar-hi, posa-hi una escala al costat en mode <em>Escales</em>.
   </p>
   <div class="row">
@@ -84,6 +86,9 @@
     <p class="etiq">Festes</p>
     <div class="row">
       <button id="btn-nadal" aria-pressed="false" title="Llums a les cases i als carrers, i arbres de Nadal a les places">Guarniments de Nadal</button>
+      <button id="btn-diada" aria-pressed="false" title="Senyeres i estelades als balcons, les finestres i els terrats de gairebé la meitat de les cases">Diada</button>
+      <button id="btn-festa" aria-pressed="false" title="Damassos als balcons i banderetes als carrers">Festa Major</button>
+      <button id="btn-gegants" aria-pressed="false" title="Una trobada de gegants, tots junts a la plaça amb més lloc">Gegants</button>
     </div>
     <p class="etiq">Imatge de la vila</p>
     <div class="row">
@@ -113,6 +118,7 @@
       <dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>Cases, Carrers, Voltes, Pintar</dd>
       <dt><kbd>5</kbd>–<kbd>9</kbd></dt><dd>Ponts, Molls, Fars, Escales, Muntanya</dd>
       <dt><kbd>B</kbd></dt><dd>Bars i restaurants</dd>
+      <dt><kbd>L</kbd></dt><dd>Platja</dd>
       <dt><kbd>0</kbd></dt><dd>Mercat de Nadal (amb els guarniments)</dd>
       <dt><kbd>X</kbd></dt><dd>Activa o desactiva <em>Treure</em></dd>
       <dt>Botó dret, <kbd>Maj</kbd>+clic</dt><dd>Treu el de més amunt: un pis, una escala, un nivell de terreny&#8230;</dd>
@@ -142,6 +148,8 @@
 <script src="js/muntanya.js"></script>
 <script src="js/nadal.js"></script>
 <script src="js/bars.js"></script>
+<script src="js/diada.js"></script>
+<script src="js/festa.js"></script>
 <script src="js/cobertes-carrers.js"></script>
 <script src="js/poble.js"></script>
 <script src="js/escena.js"></script>

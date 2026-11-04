@@ -220,6 +220,12 @@ function paret(G, A, B, y0, y1, col, ci, L, e, plantaBaixa, donaCarrer, especial
 
   if(!balco){
     lleixa(t0-fm*1.5, t1+fm*1.5, ya-0.06, ya-0.03, 0.05, colMarc(ci));   // ampit
+    // per la Diada, una bandera que penja de l'ampit. A la planta baixa, només si no hi ha cap més
+    // lloc (una casa d'un sol pis), i més curta perquè no toqui el carrer
+    apuntaDiada(ci, plantaBaixa ? 0.9 : 0.35, () => {
+      const a = P(t0 - fm, ya - 0.03, 0.066);
+      banderaPenjada(G, {x:a[0], y:a[1], z:a[2]}, {x:ux, y:0, z:uz}, {x:nx, y:0, z:nz}, (t1 - t0 + 2*fm)*len, plantaBaixa ? 0.15 : 0.24, ci);
+    });
     return;
   }
 
@@ -243,6 +249,15 @@ function paret(G, A, B, y0, y1, col, ci, L, e, plantaBaixa, donaCarrer, especial
     const pt = P(tb0 + 0.07/len, yl, o*0.5);
     test(G, pt[0], yl, pt[2], k*31 + L, 0.7);
   }
+  // per la Festa Major, de vegades un damàs penjat de la barana; si no, per la Diada, potser la bandera
+  if(damasAqui(ci, L, e)){
+    const wd = Math.min(0.34, (tb1 - tb0)*len*0.62), a = P((tb0 + tb1)/2 - wd/2/len, yt + 0.005, oa + 0.016);
+    damas(G, {x:a[0], y:a[1], z:a[2]}, {x:ux, y:0, z:uz}, {x:nx, y:0, z:nz}, wd, 0.4, ci, L, e);
+  }
+  else apuntaDiada(ci, 0, () => {
+    const wb = (tb1 - tb0)*len*0.86, a = P((tb0 + tb1)/2 - wb/2/len, yt + 0.005, oa + 0.016);
+    banderaPenjada(G, {x:a[0], y:a[1], z:a[2]}, {x:ux, y:0, z:uz}, {x:nx, y:0, z:nz}, wb, wb*0.62, ci);
+  });
 }
 
 /* --- vegetació: xiprer, pi pinyoner i olivera --- */
