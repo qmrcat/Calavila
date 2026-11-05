@@ -115,6 +115,9 @@ function muntanya(G, cel, ci){
   if(fars[ci]){                                   // el far, al cim, sobre un sòcol de pedra
     con(G, Cc.x, Cc.z, 0.31, 0.28, Cc.y - 0.35, Cc.y, 8, CARREU, true);
     far(G, Cc.x, Cc.y, Cc.z, ci);
+  } else if(molins[ci]){                          // un aerogenerador, al cim, sobre una base de formigó
+    con(G, Cc.x, Cc.z, 0.16, 0.15, Cc.y - 0.3, Cc.y + 0.03, 8, GRIS_MOLI, true);
+    aerogenerador(G, Cc.x, Cc.y + 0.03, Cc.z, ci);
   } else {
     const t = hash3(ci, 219, 1);
     if(t < 0.42){                                 // un pi o, més avall, una olivera

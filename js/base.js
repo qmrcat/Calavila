@@ -14,10 +14,13 @@
      port.js              molls, norais, fars, illots i barques amarrades
      muntanya.js          terreny de roca, amb pendents i vegetació
      nadal.js             guarniments de Nadal: llums, arbres i mercat
-     bars.js              bars i restaurants, amb la seva terrassa
+     bars.js              locals: bars, restaurants (amb terrassa), botigues i hotels
      diada.js             la Diada: senyeres i estelades a balcons, finestres i terrats
      festa.js             la Festa Major: damassos, banderetes i gegants
      cobertes-carrers.js  cantonades, voltes, cobertes, carrers i escales
+     teulades.js          tipus de teulades (quatre, dues i una aigua) i de terrats (ampit, barana, golfes)
+     energia.js           aerogeneradors (a la mar o a la muntanya) i plaques solars
+     consulta.js          només consulta: la fitxa que diu què és cada element
      poble.js             estat del poble, anàlisi i construcció de la malla
      escena.js            llums, mar, barques, gavines, dia i nit
      controls.js          ressaltat, càmera, ratolí i tàctil, botons, teclat

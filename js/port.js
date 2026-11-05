@@ -22,7 +22,7 @@ const CAIXES   = [FUSTA, C('#3f6f9a'), C('#d8a23a')];
 const BOIA     = C('#e9b23a');
 
 // aigua lliure, on hi pot anar una barca
-const aiguaLliure = w => w >= 0 && heights[w] === 0 && heff[w] <= 0 && !esCarrer[w] && !pont[w] && !esSorra[w] && !fars[w];
+const aiguaLliure = w => w >= 0 && heights[w] === 0 && heff[w] <= 0 && !esCarrer[w] && !pont[w] && !esSorra[w] && !fars[w] && !molins[w];
 
 // es pot fer un moll aquí? aigua (o un carrer ja fet) que toqui terra, un carrer, un pont o un altre moll
 function potMoll(ci){

@@ -14,16 +14,18 @@ function marcarHover(ci){
   hoverCi = ci;
   redibuixa();
   if(ci < 0){ hoverMesh.visible = false; return; }
-  const treu = modeTreure || majPremuda;
-  // en els modes que tenen condicions, verd si es pot i vermell si no
-  const valid = mode === 'volta' ? (heights[ci] > 0 ? potPorxo(ci) : potVolta(ci)) : mode === 'pont' ? (pont[ci] > 0 || eixPont(ci) > 0)
+  const treu = !consulta && (modeTreure || majPremuda);
+  // en els modes que tenen condicions, verd si es pot i vermell si no (en consulta, sempre blanc)
+  const valid = consulta ? null : mode === 'volta' ? (heights[ci] > 0 ? potPorxo(ci) : potVolta(ci)) : mode === 'pont' ? (pont[ci] > 0 || eixPont(ci) > 0)
               : mode === 'moll' ? (moll[ci] > 0 || potMoll(ci))
               : mode === 'far' ? (fars[ci] > 0 || potFar(ci))
               : mode === 'escala' ? (escalaE[ci] >= 0 || sentitsEscala(ci).length > 0)
               : mode === 'roca' ? potRoca(ci)
               : mode === 'platja' ? (esSorra[ci] || potPlatja(ci))
+              : mode === 'teulada' ? (heff[ci] > 0 && escalaE[ci] < 0 && !tipusTorre[ci])
               : mode === 'mercat' ? (mercat[ci] > 0 || potMercat(ci))
-              : mode === 'bar' ? potBar(ci) : null;
+              : mode === 'bar' ? potBar(ci)
+              : mode === 'energia' ? (heights[ci] > 0 ? potSolar(ci) : (molins[ci] > 0 || potMoli(ci))) : null;
   hoverMesh.material.color.setHex(treu ? 0xd4704f : valid === null ? 0xffffff : valid ? 0x6fd39a : 0xd4704f);
   hoverMesh.material.opacity = (valid !== null || treu) ? 0.5 : 0.32;
   const cel = cells[ci];
@@ -115,6 +117,7 @@ cv.addEventListener('pointermove', e=>{
   if(arrossegant){
     const dx = e.clientX - lx, dy = e.clientY - ly;
     mogut += Math.abs(dx) + Math.abs(dy);
+    if(mogut >= 6) amagaFitxa();                 // movent la càmera, la fitxa ja no assenyala on era
     if(movent) desplaca(dx, dy);
     else { az -= dx*0.006; el += dy*0.005; }
     lx = e.clientX; ly = e.clientY;
@@ -136,6 +139,7 @@ cv.addEventListener('pointerup', e=>{
   arrossegant = false; movent = false;
   if(mogut < 6){
     const ci = cellSota(e);
+    if(consulta){ mostraFitxa(ci, e.clientX, e.clientY); return; }   // només consulta: diu què hi ha
     if(ci >= 0){
       // treure no depèn del mode: el botó dret, Maj+clic o Treure treuen el que hi ha més amunt
       // de la cel·la. Només en mode Pintar, Maj+clic i Treure tornen la façana al color automàtic
@@ -144,6 +148,8 @@ cv.addEventListener('pointerup', e=>{
       let enlairat = -1;
       if(treure && !(mode === 'pintar' && !dret)){
         treuElement(ci);
+      } else if(molins[ci] && !['roca', 'energia', 'pintar', 'bar', 'teulada'].includes(mode)){
+        avis('Aquí hi ha un aerogenerador. Treu-lo primer amb el botó dret.');
       } else if(mode === 'pintar'){
         if(heff[ci] <= 0) avis('Aquí no hi ha cap casa per pintar.');
         else { tint[ci] = treure ? -1 : colSel; avis(''); }
@@ -200,17 +206,17 @@ cv.addEventListener('pointerup', e=>{
           avis(op.length > 1 ? 'Torna-hi a clicar per girar-la.' : '');
         }
       } else if(mode === 'bar'){
-        // la planta baixa d'una casa es torna un bar o un restaurant; un altre clic els canvia
-        if(!(heights[ci] > 0)) avis('Clica una casa: el bar o el restaurant es fa a la planta baixa.');
+        // la planta baixa d'una casa es torna un local; cada clic el canvia pel següent
+        if(!(heights[ci] > 0)) avis('Clica una casa: el local es fa a la planta baixa.');
         else if(span[ci]) avis('Aquesta casa té porxo: la planta baixa és oberta. Tanca\'l en mode Voltes.');
         else if(!potBar(ci)) avis('Aquesta casa no té cap façana a la planta baixa: totes donen a altres cases.');
         else {
-          bar[ci] = bar[ci] ? 3 - bar[ci] : (hash3(ci, 325, 1) < 0.5 ? 1 : 2);
-          const nom = bar[ci] === 2 ? 'un restaurant' : 'un bar';
+          bar[ci] = bar[ci] % LOCAL_MAX + 1;   // bar, restaurant, queviures, forn, quiosc, hotel, i torna a començar
+          const nom = LOCALS[bar[ci]], seg = LOCALS[bar[ci] % LOCAL_MAX + 1];
           triaBars();
-          avis(terrassaDe.size && [...terrassaDe.values()].includes(ci)
-               ? 'Ara és ' + nom + ', amb terrassa. Torna-hi a clicar per canviar-lo.'
-               : 'Ara és ' + nom + '. Per tenir terrassa, cal que davant de la casa hi hagi dues cel·les buides seguides, la primera un carrer o una plaça plans.');
+          avis(!ambTerrassa(ci) ? 'Ara és ' + nom + '. Torna-hi a clicar per fer-ne ' + seg + '.'
+               : [...terrassaDe.values()].includes(ci) ? 'Ara és ' + nom + ', amb terrassa. Torna-hi a clicar per fer-ne ' + seg + '.'
+               : 'Ara és ' + nom + '. Per tenir terrassa, cal que davant de la casa hi hagi dues cel·les buides seguides, la primera un carrer o una plaça plans. Torna-hi a clicar per fer-ne ' + seg + '.');
         }
       } else if(mode === 'mercat'){
         if(mercat[ci]) avis('Aquí ja hi ha una parada. Clica les cel·les del costat per fer créixer el mercat.');
@@ -224,6 +230,35 @@ cv.addEventListener('pointerup', e=>{
           mercat[ci] = 1; fars[ci] = 0; forcat[ci] = false;
           avis('');
         }
+      } else if(mode === 'teulada'){
+        // cada clic canvia l'estil de la coberta del grup de la casa; el botó dret la torna automàtica
+        if(!(heff[ci] > 0)) avis('Clica una casa per canviar-ne la teulada.');
+        else if(escalaE[ci] >= 0) avis('Aquesta casa té una escala a sobre: no té teulada.');
+        else if(tipusTorre[ci]) avis('Les torres tenen la seva coberta: campanar o merlets.');
+        else {
+          const {membres, clau} = grupCoberta(ci);
+          const ara = estilCoberta(membres, heff[ci], clau, null), op = estilsPossibles(membres, clau);
+          const seg = op[(op.indexOf(ara) + 1) % op.length];
+          for(const m of membres) teulada[m] = 0;
+          teulada[ci] = ESTILS.indexOf(seg) + 1;
+          const nota = op.length < ESTILS.length ? (membres.some(m => terratForcat[m]) ? ' Amb una escala, només hi pot haver terrat.' : '') : '';
+          avis('Ara té ' + NOM_ESTIL[seg] + (membres.length > 1 ? ' (tot el bloc del mateix color i alçada)' : '') + '. Torna-hi a clicar per canviar-la; amb el botó dret torna a ser automàtica.' + nota);
+        }
+      } else if(mode === 'energia'){
+        // a una casa, plaques solars (o fora); a la mar o al cim d'una muntanya, un aerogenerador
+        if(heights[ci] > 0){
+          if(escalaE[ci] >= 0) avis('Aquesta casa té una escala a sobre: no hi caben plaques.');
+          else if(tipusTorre[ci]) avis('Les torres no porten plaques solars.');
+          else if(solar[ci]){ solar[ci] = 0; avis('Plaques solars tretes.'); }
+          else { solar[ci] = 1; avis('Plaques solars posades, cap al sol. Torna-hi a clicar per treure-les.'); }
+        } else if(molins[ci]) avis('Aquí ja hi ha un aerogenerador. El botó dret el treu.');
+        else if(pont[ci]) avis('Aquí hi ha un pont. Treu-lo primer amb el botó dret.');
+        else if(fars[ci]) avis('Aquí hi ha un far. Treu-lo primer amb el botó dret.');
+        else if(esSorra[ci]) avis('A la platja no hi va. Els aerogeneradors van a la mar o al cim d\'una muntanya.');
+        else if(span[ci] || forcat[ci]) avis('Sota una volta no hi cap un aerogenerador.');
+        else if(esCarrer[ci] && !esMunt(ci)) avis('Als carrers i a les places no hi van. Els aerogeneradors van a la mar o al cim d\'una muntanya.');
+        else if(!potMoli(ci)) avis('Massa a prop d\'un altre aerogenerador: les pales es tocarien.');
+        else { molins[ci] = 1; avis('Aerogenerador alçat. Per posar plaques solars, clica una casa.'); }
       } else if(mode === 'platja'){
         // a l'aigua arran de costa fa l'arena; a la platja, cada clic hi canvia el que hi ha a sobre
         if(esSorra[ci]){
@@ -278,6 +313,9 @@ cv.addEventListener('pointerup', e=>{
       }
       // si s'hi ha fet terra, un pont o un far, la platja de sota se'n va
       if(platja[ci] && (heights[ci] > 0 || carrer[ci] || pont[ci] || fars[ci])) platja[ci] = 0;
+      // i un aerogenerador només s'aguanta a la mar o a la roca; les plaques, sobre una casa
+      if(molins[ci] && (heights[ci] > 0 || pont[ci] || fars[ci] || platja[ci] || escales[ci] || (carrer[ci] && !roca[ci]))) molins[ci] = 0;
+      if(solar[ci] && (!heights[ci] || escales[ci])) solar[ci] = 0;
       construirMalla();
       if(enlairat >= 0) avisaAcces(enlairat);
       instantania();
@@ -290,16 +328,22 @@ cv.addEventListener('pointerup', e=>{
 function treuElement(ci){
   avis('');
   if(escales[ci] && heights[ci] > 0){ escales[ci] = 0; return; }
-  if(mode === 'bar' && bar[ci] && heights[ci] > 0){ bar[ci] = 0; return; }   // en mode Bars, primer el bar
+  if(mode === 'bar' && bar[ci] && heights[ci] > 0){ bar[ci] = 0; return; }   // en mode Locals, primer el local
   if(mode === 'volta' && porxo[ci] && heights[ci] > 0){ porxo[ci] = 0; return; }   // en mode Voltes, primer el porxo
+  if(mode === 'energia' && solar[ci] && heights[ci] > 0){ solar[ci] = 0; avis('Plaques solars tretes.'); return; }   // en mode Energia, primer les plaques
+  if(mode === 'teulada' && heff[ci] > 0 && escalaE[ci] < 0){       // en mode Teulades, primer la teulada triada a mà
+    const {membres} = grupCoberta(ci);
+    if(membres.some(m => teulada[m])){ for(const m of membres) teulada[m] = 0; avis('La teulada torna a ser automàtica.'); return; }
+  }
   if(heights[ci] > 0){
     heights[ci]--;
     if(heights[ci] < 2) porxo[ci] = 0;   // amb un sol pis ja no hi cap el porxo
-    if(heights[ci] === 0){ bar[ci] = 0; if(!carrer[ci]) nivell[ci] = 0; }
+    if(heights[ci] === 0){ bar[ci] = 0; teulada[ci] = 0; solar[ci] = 0; if(!carrer[ci]) nivell[ci] = 0; }
     return;
   }
   if(forcat[ci]){ forcat[ci] = false; return; }
   if(fars[ci]){ fars[ci] = 0; return; }
+  if(molins[ci]){ molins[ci] = 0; return; }
   if(mercat[ci] && nadal){ mercat[ci] = 0; return; }   // sense guarniments no es veu: no es treu d'amagat
   if(escales[ci]){ escales[ci] = 0; return; }
   if(pont[ci]){ pont[ci] = 0; return; }
@@ -324,6 +368,7 @@ cv.addEventListener('contextmenu', e=>e.preventDefault());
 // zoom proporcional al gir: el ratolí tàctil envia molts esdeveniments petits
 cv.addEventListener('wheel', e=>{
   e.preventDefault();
+  amagaFitxa();
   const d = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1);
   dist *= Math.exp(Math.max(-120, Math.min(120, d)) * 0.0015);
   actualitzarCamera();
@@ -338,8 +383,8 @@ addEventListener('resize', ()=>{
 
 /* ---------- 8. Botons ---------- */
 
-const botons = {casa:'m-casa', carrer:'m-carrer', volta:'m-volta', pintar:'m-pintar', bar:'m-bar',
-                pont:'m-pont', moll:'m-moll', far:'m-far', escala:'m-escala', roca:'m-roca', platja:'m-platja', mercat:'m-mercat'};
+const botons = {casa:'m-casa', carrer:'m-carrer', volta:'m-volta', pintar:'m-pintar', bar:'m-bar', teulada:'m-teulada',
+                pont:'m-pont', moll:'m-moll', far:'m-far', escala:'m-escala', roca:'m-roca', platja:'m-platja', energia:'m-energia', mercat:'m-mercat'};
 function posaMode(m){
   mode = m;
   for(const k in botons){
@@ -353,9 +398,11 @@ function posaMode(m){
      : m === 'moll' ? 'Clica l\'aigua que toca la costa per fer-hi un moll. A la punta d\'un moll hi surt un far, i a l\'aigua del costat, barques amarrades.'
      : m === 'far' ? 'Clica l\'aigua per alçar-hi un far sobre un illot, o un carrer, una plaça o un moll plans per posar-l\'hi a sobre.'
      : m === 'escala' ? 'Clica un carrer pla, o el costat d\'un, per fer-hi una escala que puja un nivell. Torna-hi a clicar per girar-la.'
-     : m === 'bar' ? 'Clica una casa per fer-ne un bar o un restaurant a la planta baixa. Si al davant hi ha dues cel·les buides, surt amb terrassa.'
+     : m === 'bar' ? 'Clica una casa per fer un local a la planta baixa; cada clic el canvia: bar, restaurant, queviures, forn de pa, quiosc i hotel. Els bars i els restaurants, si al davant hi ha dues cel·les buides, surten amb terrassa.'
      : m === 'mercat' ? 'Clica un carrer o una plaça plans per posar-hi una parada. Clica les cel·les del costat per fer créixer el mercat.'
      : m === 'roca' ? 'Clica l\'aigua o un carrer per fer-hi roca, i torna-hi a clicar per alçar-la. Les roques veïnes fan muntanya, i a sobre s\'hi poden fer cases.'
+     : m === 'teulada' ? 'Clica una casa per triar-ne la teulada: a quatre, a dues o a una aigua, o terrat amb ampit, amb barana i estenedors o amb golfes. El botó dret la torna automàtica.'
+     : m === 'energia' ? 'Clica una casa per posar-hi plaques solars, a la teulada o al terrat. Clica la mar o el cim d\'una muntanya per alçar-hi un aerogenerador.'
      : m === 'platja' ? 'Clica l\'aigua arran de costa per fer-hi platja. Clicant la platja, hi poses un para-sol, unes gandules, un llaüt, un patí de vela, la cadira del socorrista o un castell de sorra.'
      : '');
   if(hoverCi >= 0) marcarHover(hoverCi);
@@ -379,6 +426,9 @@ addEventListener('keydown', e=>{
   const dest = e.target && e.target.tagName;
   if(dest === 'TEXTAREA' || dest === 'INPUT') return;   // escrivint al panell de partida
   const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  if(k === 'Escape') amagaFitxa();
+  // només consulta: no es pot desfer ni canviar de mode; la càmera, la quadrícula i l'hora, sí
+  if(consulta && !(k in tecles || k === 'g' || k === 'n' || k === 'Escape')) return;
   if(e.ctrlKey || e.metaKey){
     if(k === 'z'){ e.preventDefault(); e.shiftKey ? refes() : desfes(); return; }
     if(k === 'y'){ e.preventDefault(); refes(); return; }
@@ -390,6 +440,8 @@ addEventListener('keydown', e=>{
   if(k === '0' && nadal) posaMode('mercat');
   if(k === 'b') posaMode('bar');
   if(k === 'l') posaMode('platja');
+  if(k === 't') posaMode('teulada');
+  if(k === 'e') posaMode('energia');
   if(k === 'x') posaTreure(!modeTreure);
   if(k === 'g') posaGrid(!mostraGrid);
   if(k === 'p') posaPlaces(!autoPlaces);
@@ -482,7 +534,7 @@ function posaMida(m){
 }
 for(const k in botonsMida) document.getElementById(botonsMida[k]).onclick = ()=>posaMida(k);
 document.getElementById('btn-buida').onclick = ()=>{
-  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0); mercat.fill(0); bar.fill(0); porxo.fill(0); platja.fill(0);
+  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0); mercat.fill(0); bar.fill(0); porxo.fill(0); platja.fill(0); teulada.fill(0); molins.fill(0); solar.fill(0);
   construirMalla(); instantania();
   avis('Cala buidada. Es pot desfer amb ↶.');
 };
@@ -585,6 +637,26 @@ document.getElementById('btn-gegants').onclick = ()=>posaGegants(!ambGegants);
   let v = null;
   try{ v = localStorage.getItem('cala:gegants'); } catch(e){}
   posaGegants(v === '1', true);   // per defecte, sense; la malla es fa en arrencar
+}
+
+/* --- només consulta: es recorda en aquest navegador --- */
+function posaConsulta(v){
+  consulta = v;
+  const b = document.getElementById('btn-consulta');
+  b.classList.toggle('on', v);
+  b.setAttribute('aria-pressed', v);
+  document.body.classList.toggle('consulta', v);
+  document.getElementById('banda-consulta').hidden = !v;
+  try{ localStorage.setItem('cala:consulta', v ? '1' : '0'); } catch(e){}
+  if(v){ posaTreure(false); avis(''); } else amagaFitxa();
+  if(hoverCi >= 0) marcarHover(hoverCi);
+}
+document.getElementById('btn-consulta').onclick = ()=>posaConsulta(!consulta);
+document.getElementById('btn-surt-consulta').onclick = ()=>posaConsulta(false);
+{
+  let v = null;
+  try{ v = localStorage.getItem('cala:consulta'); } catch(e){}
+  posaConsulta(v === '1');   // per defecte, es pot construir
 }
 
 /* --- dia, nit o automàtic --- */

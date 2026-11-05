@@ -139,9 +139,11 @@ function paret(G, A, B, y0, y1, col, ci, L, e, plantaBaixa, donaCarrer, especial
   if(plantaBaixa && teSocol(ci) && especial !== 'guaita') q(0, 1, y0, y0+SOCOL_H, 0.008, colSocol(ci, col));
   if(len < 0.45) return;
 
+  // la façana d'un local (bar, botiga o hotel) no té ni buguenvíl·lea ni fanal de paret: hi va el tendal
+  const local = barFront.get(ci) === e;
   // buguenvíl·lea: una tija que s'enfila i una mata florida que s'eixampla a dalt
   let tv = -1;
-  if(donaCarrer && !especial && hash3(k, L, 55) > 0.55){
+  if(donaCarrer && !especial && !local && hash3(k, L, 55) > 0.55){
     tv = hash3(k,L,60) < 0.5 ? 0.15 : 0.85;
     const top = y1 - 0.06;
     q(tv-0.012/len, tv+0.012/len, y0+0.09, top-0.12, 0.014, ESCORCA);
@@ -155,7 +157,7 @@ function paret(G, A, B, y0, y1, col, ci, L, e, plantaBaixa, donaCarrer, especial
   }
 
   // fanal de paret penjat d'un braç de forja
-  if(donaCarrer && plantaBaixa && !especial && len > 0.7 && hash3(k,L,123) < 0.32){
+  if(donaCarrer && plantaBaixa && !especial && !local && len > 0.7 && hash3(k,L,123) < 0.32){
     const tf = tv > 0 ? 1 - tv : (hash3(k,L,124) < 0.5 ? 0.15 : 0.85), yb = y0 + 0.74;
     const a = P(tf, 0, 0.005), b = P(tf, 0, 0.15);
     biga(G, {x:a[0], z:a[2]}, {x:b[0], z:b[2]}, yb-0.02, yb, 0.02, FERRO);

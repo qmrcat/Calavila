@@ -16,59 +16,69 @@
     </div>
     <button id="btn-plega" class="plega" aria-expanded="true" title="Plega el panell">&#8722;</button>
   </div>
-  <p class="plegable">
+  <div id="banda-consulta" class="banda" hidden>
+    <span><b>Només consulta.</b> Clica qualsevol element per saber què és. Pots girar, moure i acostar la càmera.</span>
+    <button id="btn-surt-consulta" title="Torna a poder construir">Surt</button>
+  </div>
+  <p class="plegable edicio">
     Clica per construir. Amb el botó dret treus el que hi ha més amunt, sigui quin sigui el mode
     (al mòbil, amb el botó <em>Treure</em>).
     Arrossega per girar; arrossegant amb el botó dret, <kbd>Alt</kbd>, les fletxes o dos dits, et mous.
     La roda o el pessic acosten.
   </p>
-  <div class="seg" role="group" aria-label="Construir el poble">
+  <div class="seg edicio" role="group" aria-label="Construir el poble">
     <button id="m-casa" class="on" aria-pressed="true" title="Cases (1)">Cases</button>
     <button id="m-carrer" aria-pressed="false" title="Carrers (2)">Carrers</button>
     <button id="m-volta" aria-pressed="false" title="Voltes entre cases, o porxos a la planta baixa d'una casa (3)">Voltes</button>
     <button id="m-pintar" aria-pressed="false" title="Pintar (4)">Pintar</button>
-    <button id="m-bar" aria-pressed="false" title="Bars i restaurants a la planta baixa d'una casa (B)">Bars</button>
+    <button id="m-bar" aria-pressed="false" title="Locals a la planta baixa d'una casa: bar, restaurant, queviures, forn de pa, quiosc o hotel (B)">Locals</button>
+    <button id="m-teulada" aria-pressed="false" title="Triar la teulada o el terrat d'una casa; el botó dret la torna automàtica (T)">Teulades</button>
   </div>
-  <div class="seg seg-2" role="group" aria-label="Obres">
+  <div class="seg seg-2 edicio" role="group" aria-label="Obres">
     <button id="m-pont" aria-pressed="false" title="Ponts sobre els canals (5)">Ponts</button>
     <button id="m-moll" aria-pressed="false" title="Molls de port (6)">Molls</button>
     <button id="m-far" aria-pressed="false" title="Fars, a l'aigua o en un carrer (7)">Fars</button>
     <button id="m-escala" aria-pressed="false" title="Escales que pugen un nivell (8)">Escales</button>
     <button id="m-roca" aria-pressed="false" title="Muntanya de roca, on també es pot construir (9)">Muntanya</button>
     <button id="m-platja" aria-pressed="false" title="Platja d'arena arran de costa; clicant-la, para-sols, gandules, barques... (L)">Platja</button>
+    <button id="m-energia" aria-pressed="false" title="Plaques solars a les cases, i aerogeneradors a la mar o al cim d'una muntanya (E)">Energia</button>
   </div>
-  <div class="seg seg-2" id="grup-nadal" role="group" aria-label="Nadal" hidden>
+  <div class="seg seg-2 edicio" id="grup-nadal" role="group" aria-label="Nadal" hidden>
     <button id="m-mercat" aria-pressed="false" title="Parades del mercat de Nadal, que creix a les cel·les del costat (0)">Mercat de Nadal</button>
   </div>
-  <div class="paleta" id="paleta" role="group" aria-label="Color de façana"></div>
+  <div class="paleta edicio" id="paleta" role="group" aria-label="Color de façana"></div>
   <p id="avis" role="status" aria-live="polite"></p>
-  <div class="row">
+  <div class="row edicio">
     <button id="btn-treure" aria-pressed="false" title="Treure (X)">Treure</button>
     <button id="btn-desfes" title="Desfés (Ctrl+Z)" aria-label="Desfés" disabled>&#8630;</button>
     <button id="btn-refes" title="Refés (Ctrl+Maj+Z)" aria-label="Refés" disabled>&#8631;</button>
   </div>
   <div class="plegable">
-  <p class="nota">
+  <p class="nota edicio">
     El color triat s'aplica al que construeixes; amb <em>Pintar</em> el poses a cases ja fetes.
     Amb <em>Places auto.</em> (a <em>Configuració</em>), tot buit voltat de tres cases es pavimenta sol.
     En mode <em>Voltes</em>, clica una casa de dos pisos o més per porxar-la.
     Clica dos cops un carrer per enlairar-lo un nivell; per pujar-hi, posa-hi una escala al costat en mode <em>Escales</em>.
   </p>
-  <div class="row">
+  <div class="row edicio">
     <button id="btn-poble">Poble nou</button>
     <button id="btn-cala">Cala nova</button>
     <button id="btn-buida">Buidar</button>
   </div>
   <details class="desplega" id="config">
     <summary>Configuració</summary>
-    <p class="etiq">Mida de la cala</p>
-    <div class="seg" role="group" aria-label="Mida de la cala">
+    <p class="etiq">Ús</p>
+    <div class="row">
+      <button id="btn-consulta" aria-pressed="false" title="Mirar el poble sense poder-lo canviar: clicant un element, diu què és">Només consulta</button>
+    </div>
+    <p class="etiq edicio">Mida de la cala</p>
+    <div class="seg edicio" role="group" aria-label="Mida de la cala">
       <button id="mida-normal" class="on" aria-pressed="true" title="Cala normal (unes 890 cel·les)">Normal</button>
       <button id="mida-mitjana" aria-pressed="false" title="Cala mitjana (unes 1.700 cel·les). Fa un poble nou">Mitjana</button>
       <button id="mida-gran" aria-pressed="false" title="Cala gran (unes 3.000 cel·les). Fa un poble nou">Gran</button>
     </div>
-    <p class="etiq">Construcció</p>
-    <div class="row">
+    <p class="etiq edicio">Construcció</p>
+    <div class="row edicio">
       <button id="btn-places" class="on" aria-pressed="true"
               title="Els buits envoltats de cases es pavimenten sols, com al Townscaper (P)">Places auto.</button>
     </div>
@@ -104,9 +114,9 @@
     <div class="row">
       <button id="btn-copia">Copia</button>
       <button id="btn-baixa">Baixa</button>
-      <button id="btn-importa">Carrega</button>
+      <button id="btn-importa" class="edicio">Carrega</button>
     </div>
-    <div class="row">
+    <div class="row edicio">
       <button id="btn-obre">Obre un fitxer&#8230;</button>
     </div>
     <input type="file" id="fitxer" accept=".cala,.txt,text/plain" hidden>
@@ -117,8 +127,10 @@
     <dl>
       <dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>Cases, Carrers, Voltes, Pintar</dd>
       <dt><kbd>5</kbd>–<kbd>9</kbd></dt><dd>Ponts, Molls, Fars, Escales, Muntanya</dd>
-      <dt><kbd>B</kbd></dt><dd>Bars i restaurants</dd>
+      <dt><kbd>B</kbd></dt><dd>Locals: bars, restaurants, botigues i hotels</dd>
       <dt><kbd>L</kbd></dt><dd>Platja</dd>
+      <dt><kbd>T</kbd></dt><dd>Teulades</dd>
+      <dt><kbd>E</kbd></dt><dd>Energia: plaques solars i aerogeneradors</dd>
       <dt><kbd>0</kbd></dt><dd>Mercat de Nadal (amb els guarniments)</dd>
       <dt><kbd>X</kbd></dt><dd>Activa o desactiva <em>Treure</em></dd>
       <dt>Botó dret, <kbd>Maj</kbd>+clic</dt><dd>Treu el de més amunt: un pis, una escala, un nivell de terreny&#8230;</dd>
@@ -138,6 +150,8 @@
   </div>
 </div>
 
+<div id="fitxa" role="status" aria-live="polite" hidden></div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <!-- l'ordre importa: vegeu la capçalera de js/base.js -->
 <script src="js/base.js"></script>
@@ -151,6 +165,9 @@
 <script src="js/diada.js"></script>
 <script src="js/festa.js"></script>
 <script src="js/cobertes-carrers.js"></script>
+<script src="js/teulades.js"></script>
+<script src="js/energia.js"></script>
+<script src="js/consulta.js"></script>
 <script src="js/poble.js"></script>
 <script src="js/escena.js"></script>
 <script src="js/controls.js"></script>

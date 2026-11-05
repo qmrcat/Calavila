@@ -12,6 +12,7 @@ let mercat = []; // 1 = una parada del mercat de Nadal (només es veu amb els gu
 let bar = [];    // 1 = la planta baixa de la casa és un bar; 2, un restaurant
 let porxo = [];  // 1 = la planta baixa de la casa és un porxo obert, amb arcs
 let platja = []; // 0 = cap; 1 = arena; 2 i més, què hi ha a sobre (vegeu ELEMENTS_PLATJA)
+let teulada = []; // 0 = la tria el poble; 1 i més, la triada a mà en mode Teulades (vegeu ESTILS)
 let mode = 'casa', colSel = -1, modeTreure = false;
 let townMesh = null, pickMesh = null, faceCell = null, hoverMesh = null;
 let fans = new Map(), posV = new Map(), vora = new Set();
@@ -147,7 +148,7 @@ const esIllot = ci => fars[ci] > 0 && heights[ci] === 0 && !esCarrer[ci] && !pon
 const carrerPla = ci => escalaE[ci] < 0;
 // es pot posar un far aquí? a l'aigua, o en un carrer, una plaça o un moll plans i sense volta
 function potFar(ci){
-  if(heights[ci] > 0 || pont[ci] || span[ci]) return false;
+  if(heights[ci] > 0 || pont[ci] || span[ci] || molins[ci]) return false;
   return !esCarrer[ci] || carrerPla(ci);
 }
 // Fanals: n'hi pot haver en un carrer, un moll o un pont. Perquè no en surtin mai dos de tocar
@@ -216,6 +217,7 @@ function alturaTop(ci){
   }
   if(pont[ci]) return 0.3;
   if(esIllot(ci)) return ILLOT_Y;
+  if(esMoliMar(ci)) return 0.34;                // la plataforma de l'aerogenerador
   return esSorra[ci] ? 0.06 : 0.04;
 }
 
@@ -226,7 +228,7 @@ function construirMalla(){
   if(ambGegants) triaGegants();
   triaFanals();
   const G = newG();
-  GL = newG(); GF = newG(); LLUMS = []; PILARS = new Set(); LLOCS_DIADA = new Map();
+  GL = newG(); GF = newG(); LLUMS = []; PILARS = new Set(); LLOCS_DIADA = new Map(); ROTORS = []; LLUMS_MOLI = [];
   let nArcs = 0, nEsc = 0;
 
   for(let ci=0; ci<cells.length; ci++){
@@ -235,6 +237,7 @@ function construirMalla(){
     const via = esCarrer[ci];
     if(pont[ci]){ pontG(G, cel, ci); continue; }
     if(esIllot(ci)){ illot(G, cel, ci); continue; }
+    if(esMoliMar(ci)){ moliMar(G, cel, ci); continue; }   // un aerogenerador a la mar
     if(esSorra[ci]){ sorra(G, cel, ci); continue; }
     if(h <= 0 && !via) continue;
 
@@ -373,6 +376,7 @@ function construirMalla(){
   scene.add(haloMesh);
 
   posaAmarrats(amarres());
+  posaRotors();                                 // les pales dels aerogeneradors, que giren
 
   // malla invisible per al picking: una columna per cel·la
   const P = newG(); faceCell = [];
@@ -402,7 +406,7 @@ function construirMalla(){
 function construirGrid(){
   const pos = [], vistes = new Set(), y = 0.012;
   for(let ci=0; ci<cells.length; ci++){
-    if(heff[ci] > 0 || esCarrer[ci] || esSorra[ci] || pont[ci] || fars[ci]) continue;   // només on encara hi ha mar
+    if(heff[ci] > 0 || esCarrer[ci] || esSorra[ci] || pont[ci] || fars[ci] || esMoliMar(ci)) continue;   // només on encara hi ha mar
     const c = cells[ci];
     for(let e=0;e<4;e++){
       const a = c.vi[e], b = c.vi[(e+1)%4];
@@ -441,13 +445,16 @@ function novaCala(s, mida = midaCala){
   bar     = new Array(cells.length).fill(0);
   porxo   = new Array(cells.length).fill(0);
   platja  = new Array(cells.length).fill(0);
+  teulada = new Array(cells.length).fill(0);
+  molins  = new Array(cells.length).fill(0);
+  solar   = new Array(cells.length).fill(0);
   tint    = new Array(cells.length).fill(-1);   // -1 = automàtic
 }
 
 // la llavor del poble va a part de la de la cala: `seed` ha de ser sempre
 // la que ha fet la quadrícula, perquè és la que es desa a la partida
 function generarPoble(llavor = seed + 991){
-  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0); mercat.fill(0); bar.fill(0); porxo.fill(0); platja.fill(0);
+  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0); mercat.fill(0); bar.fill(0); porxo.fill(0); platja.fill(0); teulada.fill(0); molins.fill(0); solar.fill(0);
   const rnd = mulberry32(llavor);
   let inici = 0, millor = Infinity;
   cells.forEach((c,i)=>{ const d = Math.hypot(c.c.x, c.c.z); if(d < millor){ millor = d; inici = i; } });

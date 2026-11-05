@@ -128,28 +128,36 @@ function arcada(G, cel, ci, col, Lb = 0){
 
 const RAFEC = 0.11, PAS = 0.26;
 
+// el grup que comparteix coberta amb la casa ci: {membres, clau}. vista, si n'hi ha, es va marcant
+function grupCoberta(ci, vista = new Array(cells.length).fill(false)){
+  // només s'ajunten les del mateix color: una casa pintada d'un altre color és un edifici a part
+  const h = heff[ci], color = tintEf(ci), pila = [ci], membres = [ci];
+  vista[ci] = true;
+  while(pila.length){
+    const a = pila.pop();
+    for(const b of cells[a].nb){
+      if(b >= 0 && !vista[b] && heff[b] === h && escalaE[b] < 0 && tintEf(b) === color){ vista[b] = true; pila.push(b); membres.push(b); }
+    }
+  }
+  // L'estil de la coberta (teula o terrat, color, xemeneia) surt d'una casa del mateix
+  // grup, no d'un número d'ordre: si no, afegir una casa en un racó renumerava tots els
+  // grups de després i canviava teulades d'arreu del poble. Ara només canvia l'estil
+  // d'un grup quan hi entra o en surt la casa que el decideix.
+  let clau = ci, hm = hash3(ci, 41, 17);
+  for(const m of membres){ const v = hash3(m, 41, 17); if(v < hm){ hm = v; clau = m; } }
+  return {membres, clau};
+}
+
 function cobertes(G){
   const n = cells.length;
   const vista = new Array(n).fill(false);
+  FACETES = new Map(); AMB_PLAQUES = new Set();
   for(let ci=0; ci<n; ci++){
     if(heff[ci] <= 0 || vista[ci] || escalaE[ci] >= 0) continue;   // una escala a sobre fa de coberta
-    // només s'ajunten les del mateix color: una casa pintada d'un altre color és un edifici a part
-    const h = heff[ci], color = tintEf(ci), pila = [ci], membres = [ci];
-    vista[ci] = true;
-    while(pila.length){
-      const a = pila.pop();
-      for(const b of cells[a].nb){
-        if(b >= 0 && !vista[b] && heff[b] === h && escalaE[b] < 0 && tintEf(b) === color){ vista[b] = true; pila.push(b); membres.push(b); }
-      }
-    }
-    // L'estil de la coberta (teula o terrat, color, xemeneia) surt d'una casa del mateix
-    // grup, no d'un número d'ordre: si no, afegir una casa en un racó renumerava tots els
-    // grups de després i canviava teulades d'arreu del poble. Ara només canvia l'estil
-    // d'un grup quan hi entra o en surt la casa que el decideix.
-    let clau = ci, hm = hash3(ci, 41, 17);
-    for(const m of membres){ const v = hash3(m, 41, 17); if(v < hm){ hm = v; clau = m; } }
-    ferCoberta(G, membres, h, clau);
+    const {membres, clau} = grupCoberta(ci, vista);
+    ferCoberta(G, membres, heff[ci], clau);
   }
+  plaquesSolars(G);                             // les plaques, sobre l'aiguavés que mira més al sol
 }
 
 // clau: la cel·la del grup que en decideix l'estil
@@ -208,8 +216,11 @@ function ferCoberta(G, llista, h, clau){
     return;
   }
 
-  // terrat comú: a l'atzar, o perquè hi arrenca o hi arriba una escala
-  if(llista.some(m => terratForcat[m]) || (!torre && hash3(clau, 9, 2) < 0.24)){
+  // l'estil (vegeu teulades.js): terrat, sempre on hi arrenca o hi arriba una escala
+  const estil = estilCoberta(llista, h, clau, torre);
+  const teu = TEULES[Math.floor(hash3(clau,1,3)*TEULES.length)];
+
+  if(estil === 'terrat' || estil === 'barana' || estil === 'golfes'){
     for(const ci of llista){
       const col = colorParet(ci);              // l'ampit de cada casa, del color de la seva façana
       const vi = cells[ci].vi, P = vi.map(v => pos.get(v));
@@ -222,14 +233,18 @@ function ferCoberta(G, llista, h, clau){
         const da = dirs.get(vi[e]), db = dirs.get(vi[(e+1)%4]);
         const ai = {x:A.x - da.x*0.20, z:A.z - da.z*0.20};
         const bi = {x:B.x - db.x*0.20, z:B.z - db.z*0.20};
+        if(estil === 'barana'){ baranaFerro(G, A, B, ai, bi, y, col); continue; }
         quad(G, [A.x,y-0.09,A.z], [B.x,y-0.09,B.z], [B.x,top,B.z], [A.x,top,A.z], col);
         quad(G, [bi.x,y,bi.z], [ai.x,y,ai.z], [ai.x,top,ai.z], [bi.x,top,bi.z], col);
         quad(G, [A.x,top,A.z], [B.x,top,B.z], [bi.x,top,bi.z], [ai.x,top,ai.z], col);
       }
       const hc = hash3(ci,4,4), cc = cells[ci].c;
-      if(hc > 0.82)      arbre(G, cc.x, y, cc.z, 0.55, ci);
+      if(estil === 'golfes' && ci === clau){ golfes(G, ci, y, teu); continue; }   // les golfes, a la casa que decideix
+      if(solar[ci]) plaquesTerrat(G, ci, y);   // plaques solars: ocupen el terrat
+      else if(estil === 'barana' ? hc < 0.75 : estil === 'golfes' && hc < 0.5) estenedor(G, ci, y);   // roba estesa
+      else if(hc > 0.82)      arbre(G, cc.x, y, cc.z, 0.55, ci);
       else if(hc > 0.64) test(G, cc.x, y, cc.z, ci, 1.3);
-      else if(hc < 0.12) pergola(G, ci, y);
+      else if(hc < 0.12 && estil === 'terrat') pergola(G, ci, y);
       apuntaDiada(ci, 0.15, () => {               // per la Diada, un pal amb la bandera en un racó del terrat
         const p = entre(cells[ci].c, cells[ci].p[Math.floor(hash3(ci, 407, 1)*4)], 0.55);
         banderaPal(G, p.x, y, p.z, 0.8, ci);
@@ -238,7 +253,9 @@ function ferCoberta(G, llista, h, clau){
     return;
   }
 
-  const teu = TEULES[Math.floor(hash3(clau,1,3)*TEULES.length)];
+  // teulada a dues aigües o a una aigua; si no hi encaixa, a quatre aigües com sempre
+  if(estil === 'dues' && teuladaDuesAigues(G, llista, y, clau, pos, vora_, teu)) return;
+  if(estil === 'una' && teuladaUnaAigua(G, clau, y, pos, teu)) return;
   const cim = torre === 'campanar' ? 0.78 : 0;    // el campanar acaba en punxa
   for(const ci of llista){
     const vi = cells[ci].vi, P = vi.map(v => pos.get(v)), Y = vi.map(v => alt(v));
@@ -248,6 +265,7 @@ function ferCoberta(G, llista, h, clau){
       const a = P[k], b = P[(k+1)%4];
       // cada aiguavés amb un to lleugerament diferent: les teules no són mai iguals
       tri(G, [a.x,Y[k],a.z], [b.x,Y[(k+1)%4],b.z], [cc.x,cy,cc.z], clar(teu, 0.92 + hash3(ci,k,77)*0.14));
+      if(!cim) facetaSolar(ci, [a.x,Y[k],a.z], [b.x,Y[(k+1)%4],b.z], [cc.x,cy,cc.z], [cc.x,cy,cc.z]);
     }
     // per la Diada, si la casa no té cap altre lloc on penjar la bandera (una casa de dins
     // de l'illa, sense façanes a fora), un pal al capdamunt de la teulada
@@ -265,7 +283,7 @@ function ferCoberta(G, llista, h, clau){
     con(G, c.x, c.z, 0.012, 0.010, y+cim-0.02, y+cim+0.26, 4, FERRO, false);
     bola(G, c.x, y+cim+0.06, c.z, 0.045, 0.08, BRONZE, llista[0], 6);
     biga(G, {x:c.x-0.09, z:c.z}, {x:c.x+0.09, z:c.z}, y+cim+0.21, y+cim+0.23, 0.012, FERRO);
-  } else if(hash3(clau,7,7) < 0.6){             // xemeneia, a la mateixa casa que decideix l'estil
+  } else if(hash3(clau,7,7) < 0.6 && !solar[clau]){   // xemeneia, a la mateixa casa que decideix l'estil (si no hi ha plaques)
     const ci = clau;
     const cel = cells[ci], vi = cel.vi;
     const dmin = Math.min(d.get(vi[0]), d.get(vi[1]), d.get(vi[2]), d.get(vi[3]));

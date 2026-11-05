@@ -22,7 +22,7 @@ const PLATJA_MAX = ELEMENTS_PLATJA.length - 1;
 
 // es pot fer platja aquí? a l'aigua, tocant terra o una altra platja
 function potPlatja(ci){
-  if(ci < 0 || heights[ci] > 0 || carrer[ci] || esCarrer[ci] || pont[ci] || fars[ci] || moll[ci]) return false;
+  if(ci < 0 || heights[ci] > 0 || carrer[ci] || esCarrer[ci] || pont[ci] || fars[ci] || moll[ci] || molins[ci]) return false;
   return cells[ci].nb.some(b => b >= 0 && (heff[b] > 0 || esCarrer[b] || pont[b] > 0 || platja[b] > 0));
 }
 

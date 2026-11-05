@@ -345,6 +345,7 @@ function aplicaHora(h){
   matFinestra.color.copy(FIN_DIA).lerp(new THREE.Color(1,1,1), encesa);
   matHalo.opacity = encesa*0.95;
   if(haloMesh) haloMesh.visible = encesa > 0.01;
+  posaLlumsMoli(encesa);                     // i el llum vermell dels aerogeneradors
   estrelles.material.opacity = ss(0.45, 1, nit)*0.9;
   lluna.material.opacity = ss(0, 0.2, -e);
   gavinesDeDia = dia > 0.35;   // de nit les gavines no volen
