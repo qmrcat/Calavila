@@ -93,12 +93,16 @@ function descriuCella(ci){
     if(gegantsAqui(ci)) d.push('hi ha els gegants');
     if(nadal && arbreNadalAqui(ci)) d.push('hi ha un arbre de Nadal');
     if(fanals.has(ci)) d.push('amb un fanal');
+    if(ambGent && hiHaAsseguts(ci)) d.push('hi ha gent asseguda al banc');
+    if(ambGent && A_TERRASSA.has(ci)) d.push('hi ha gent prenent alguna cosa');
+    if(ambGent && PESCADORS.has(ci)) d.push('hi ha algú pescant');
     if(nadal && eixLlums(ci) >= 0) d.push('amb llums de Nadal d\'una façana a l\'altra');
     if(festa && eixFesta(ci) >= 0) d.push('amb banderetes de Festa Major');
     return {titol: t, detalls: d};
   }
   if(esSorra[ci]){
     d.push(platja[ci] > 1 ? 'hi ha ' + ELEMENTS_PLATJA[platja[ci]] : 'arena llisa');
+    if(ambGent && AL_SOL.has(ci)) d.push('hi ha algú prenent el sol');
     return {titol: 'Platja', detalls: d};
   }
   if(esMoliMar(ci)) return {titol: 'Aerogenerador', detalls: ['a la mar, sobre un pilot clavat al fons', 'les pales giren de cara al vent']};

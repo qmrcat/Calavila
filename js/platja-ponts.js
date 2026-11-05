@@ -84,6 +84,7 @@ function sorra(G, cel, ci){
          [ (A.x+B.x)/2 - cel.c.x, 0, (A.z+B.z)/2 - cel.c.z ]);
   }
   elementPlatja(G, bl, hy, ci, platja[ci]);
+  SORRES.push({ci, bl, hy});                    // hi pot haver gent prenent el sol
 }
 
 // on és més seca la cel·la: el punt més alt d'una petita graella, a mig camí del centre,
@@ -96,13 +97,17 @@ function llocSec(hy){
   return {u: (mu + 0.5)/2, v: (mv + 0.5)/2};
 }
 
-function elementPlatja(G, bl, hy, ci, el){
-  if(el <= 1) return;
+// on va l'element d'una cel·la de platja, i cap on mira: cap on baixa la pendent (cap al mar), amb una mica de joc
+function llocElement(bl, hy, ci){
   const s = llocSec(hy), c = bl(s.u, s.v), y = hy(s.u, s.v);
-  // cap on baixa la pendent (cap al mar), amb una mica de joc
   const a = bl(s.u, 0.2), b = bl(s.u, 0.8), cau = hy(s.u, 0.2) >= hy(s.u, 0.8);
   const mar = cau ? Math.atan2(-(b.z - a.z), b.x - a.x) : Math.atan2(-(a.z - b.z), a.x - b.x);
-  const gir = mar + (hash3(ci, 64, 1) - 0.5)*0.6;
+  return {x: c.x, y, z: c.z, gir: mar + (hash3(ci, 64, 1) - 0.5)*0.6};
+}
+
+function elementPlatja(G, bl, hy, ci, el){
+  if(el <= 1) return;
+  const L = llocElement(bl, hy, ci), c = L, y = L.y, gir = L.gir;
   if(el === 2) parasol(G, bl, hy, ci);
   else if(el === 3) afegeix(G, gandulesG(newG(), ci), c.x, y, c.z, gir, 0);
   else if(el === 4) afegeix(G, llautG(newG(), mulberry32(ci*31 + 7)), c.x, y + 0.09, c.z, hash3(ci,63,1)*6.283, 0.14);

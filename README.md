@@ -198,7 +198,7 @@ Al final del panell hi ha la secció **Configuració**, plegada: clica'n l'etiqu
 - **Mida de la cala:** normal, mitjana o gran (vegeu *Mida de la cala*).
 - **Construcció:** **Places auto.**, perquè els buits envoltats de cases es pavimentin sols.
 - **Hora del dia:** dia, nit o automàtic.
-- **Escena:** **Quadrícula** mostra o amaga la quadrícula sobre l'aigua, i **Gavines** les fa volar o les atura. Per defecte volen, i l'opció es recorda en aquest navegador.
+- **Escena:** **Quadrícula** mostra o amaga la quadrícula sobre l'aigua, i **Gavines** les fa volar o les atura. Per defecte volen, i l'opció es recorda en aquest navegador. **Gent** omple el poble de gent, gossos i gats (vegeu *Gent*). Per defecte no n'hi ha, i també es recorda en aquest navegador.
 - **Festes:** **Guarniments de Nadal** guarneix el poble (vegeu *Nadal*), **Diada** hi penja senyeres i estelades (vegeu *Diada*), **Festa Major** l'engalana i **Gegants** hi porta una trobada de gegants (vegeu *Festa Major*). Es poden activar alhora. Per defecte estan desactivats, i també es recorden en aquest navegador.
 - **Imatge de la vila:** **Descarrega** desa una imatge PNG del que es veu ara, sense el panell ni el ressaltat del cursor (`cala-AAAAMMDD-HHMM.png`). **Copia** la posa al porta-retalls, per enganxar-la en un missatge o un document. Si el navegador no deixa copiar imatges, ho diu, i llavors cal fer servir Descarrega.
 - **Partida:** desar, copiar i carregar partides (vegeu *Partides*).
@@ -208,7 +208,7 @@ Al final del panell hi ha la secció **Configuració**, plegada: clica'n l'etiqu
 Amb **Només consulta** activat, el poble es pot mirar però no canviar. Va bé per ensenyar-lo sense por que algú el toqui.
 
 - La càmera funciona com sempre: girar, moure't i acostar-te, amb el ratolí, el tàctil o el teclat.
-- S'amaguen els modes, la paleta, **Treure**, desfer i refer, **Poble nou**, **Cala nova**, **Buidar**, **Places auto.**, la mida de la cala i carregar una partida. El botó dret no treu res, i les tecles que construeixen no fan res. L'hora, la quadrícula, les gavines, les festes i la imatge de la vila sí que es poden canviar, perquè no toquen el poble.
+- S'amaguen els modes, la paleta, **Treure**, desfer i refer, **Poble nou**, **Cala nova**, **Buidar**, **Places auto.**, la mida de la cala i carregar una partida. El botó dret no treu res, i les tecles que construeixen no fan res. L'hora, la quadrícula, les gavines, la gent, les festes i la imatge de la vila sí que es poden canviar, perquè no toquen el poble.
 - **Què és cada cosa:** clica qualsevol cel·la i, al costat del cursor, surt una fitxa que diu què hi ha:
   - **Casa:** els pisos, el color, el porxo, el local de la planta baixa, la teulada (i si s'ha triat a mà), si té plaques solars, i si per Nadal o per la Diada està guarnida.
   - **Torre:** campanar o torre de guaita.
@@ -223,6 +223,22 @@ Amb **Només consulta** activat, el poble es pot mirar però no canviar. Va bé 
   La fitxa s'amaga sola al cap d'una estona, en moure la càmera, clicant el cel o amb <kbd>Esc</kbd>.
 
 A dalt del panell surt una franja que recorda que estàs en mode consulta, amb el botó **Surt**. L'opció es recorda en aquest navegador.
+
+### Gent
+
+Amb el botó **Gent**, a **Configuració → Escena**, el poble s'omple de gent:
+
+- **Pels carrers:** homes, dones, nens i nenes es passegen pels carrers, les places, els molls, els ponts i les escales, i passen per sota de les voltes i els porxos. Surten per la porta d'una casa o d'un local, fan una estona de camí i tornen a entrar per una altra porta. Els locals (bars, botigues, l'hotel...) en criden més que les cases.
+- **Acompanyats:** alguns van amb un nen o una nena, amb una altra persona o amb un gos, que els segueixen pel mateix camí. De tant en tant s'aturen una estona.
+- **Gats:** n'hi ha algun, que va pel seu compte i s'atura sovint.
+- **Als bancs:** hi seu gent, sola o de dos en dos, mirant cap a la plaça o, als molls, cap a l'aigua. Al cap d'una estona s'aixequen i se'n van caminant, i qui passeja pot anar a seure en un banc que trobi lliure.
+- **A les terrasses:** als bars i als restaurants hi ha gent asseguda a les taules prenent alguna cosa: un cafè, una cervesa o un refresc al bar, i un plat i una copa de vi al restaurant. De nit, el restaurant s'omple més que el bar.
+- **A la platja:** de dia, hi ha gent estirada a la tovallola, a l'ombra del para-sol o a les gandules. De nit, la platja es buida.
+- **Als molls:** algú pescant, assegut a la vora amb les cames penjant, la canya i una galleda. Mai on hi ha una barca amarrada.
+
+Com més cases, més gent, i de nit pel carrer i als bancs n'hi ha menys. No es camina per la roca, per la platja ni per on hi ha alguna cosa que fa nosa (una terrassa, un far, una parada del mercat, els gegants...). Si construeixes on passa algú, se'n va. La gent de les terrasses, de la platja i dels molls és sempre la mateixa a cada lloc; els que caminen i els que seuen als bancs canvien cada vegada. Si tens activada l'opció de reduir el moviment al sistema, ningú no camina ni s'aixeca. La gent no es desa a la partida.
+
+En mode **Només consulta**, la fitxa d'un banc, d'una terrassa, d'un moll o de la platja diu si hi ha algú assegut, prenent alguna cosa, pescant o prenent el sol.
 
 ### Nadal
 
@@ -327,6 +343,7 @@ Tots van junts, com en una trobada de gegants:
 - **La Festa Major** opcional, amb damassos als balcons i banderetes als carrers, i una trobada de gegants a la plaça.
 - **Guarniments de Nadal** opcionals: garlandes, llums als carrers, arbres a les places i un mercat de Nadal que pots fer créixer.
 - **Gavines** que volten la cala. Les pots aturar a **Configuració**.
+- **Gent** opcional: passejant pels carrers, amb gossos i algun gat, entrant i sortint de les cases i els locals, asseguda als bancs i a les terrasses, prenent el sol a la platja i pescant als molls.
 
 ## Partides
 
@@ -360,6 +377,7 @@ js/
   consulta.js          només consulta: la fitxa que diu què és cada element
   poble.js             estat del poble, anàlisi i construcció de la malla
   escena.js            llums, mar, barques, gavines, dia i nit
+  gent.js              la gent: vianants, gossos i gats, i gent als bancs, a les terrasses, a la platja i pescant
   controls.js          ressaltat, càmera, ratolí i tàctil, botons, teclat
   partida.js           desar, desfer i exportar
   main.js              bucle d'animació i arrencada

@@ -639,6 +639,23 @@ document.getElementById('btn-gegants').onclick = ()=>posaGegants(!ambGegants);
   posaGegants(v === '1', true);   // per defecte, sense; la malla es fa en arrencar
 }
 
+/* --- la gent: també es recorda en aquest navegador --- */
+function posaGent(v, sensemalla){
+  ambGent = v;
+  const b = document.getElementById('btn-gent');
+  b.classList.toggle('on', v);
+  b.setAttribute('aria-pressed', v);
+  try{ localStorage.setItem('cala:gent', v ? '1' : '0'); } catch(e){}
+  if(sensemalla) return;
+  if(v) engegaGent(); else treuGent();
+}
+document.getElementById('btn-gent').onclick = ()=>posaGent(!ambGent);
+{
+  let v = null;
+  try{ v = localStorage.getItem('cala:gent'); } catch(e){}
+  posaGent(v === '1', true);   // per defecte, no n'hi ha; la malla es fa en arrencar
+}
+
 /* --- només consulta: es recorda en aquest navegador --- */
 function posaConsulta(v){
   consulta = v;

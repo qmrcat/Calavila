@@ -229,6 +229,7 @@ function construirMalla(){
   triaFanals();
   const G = newG();
   GL = newG(); GF = newG(); LLUMS = []; PILARS = new Set(); LLOCS_DIADA = new Map(); ROTORS = []; LLUMS_MOLI = [];
+  PORTES = []; BANCS = []; OBST = new Map(); SORRES = []; TAULES = [];   // per on pot anar la gent
   let nArcs = 0, nEsc = 0;
 
   for(let ci=0; ci<cells.length; ci++){
@@ -377,6 +378,7 @@ function construirMalla(){
 
   posaAmarrats(amarres());
   posaRotors();                                 // les pales dels aerogeneradors, que giren
+  if(ambGent) refaGent();                       // la gent: per on pot caminar, i qui hi ha quiet
 
   // malla invisible per al picking: una columna per cel·la
   const P = newG(); faceCell = [];

@@ -350,6 +350,7 @@ function aplicaHora(h){
   lluna.material.opacity = ss(0, 0.2, -e);
   gavinesDeDia = dia > 0.35;   // de nit les gavines no volen
   mostraGavines();
+  horaGent(dia);               // de nit, la platja es buida i pel carrer hi ha menys gent
   posaCel();
 
   const hh = Math.floor(h), mm = Math.floor((h - hh)*60);

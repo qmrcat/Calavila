@@ -71,6 +71,7 @@ function mobiliariMoll(G, cel, ci, y){
   const l = Math.hypot(B.x-A.x, B.z-A.z) || 1, ux = (B.x-A.x)/l, uz = (B.z-A.z)/l;
   const a = entre(c, entre(A, B, 0.5), 0.45);
   if(h < 0.26){                                   // caixes de peix apilades
+    OBST.set(ci, k);                              // la gent no hi passa per sobre
     const n = 2 + Math.floor(hash3(ci,150,3)*2);
     for(let i=0;i<n;i++){
       const col = CAIXES[Math.floor(hash3(ci,151,i)*CAIXES.length)];
@@ -79,12 +80,14 @@ function mobiliariMoll(G, cel, ci, y){
     }
   } else if(h < 0.44){                            // xarxes amuntegades amb una boia
     const col = XARXES[Math.floor(hash3(ci,152,1)*XARXES.length)];
+    OBST.set(ci, k);
     bola(G, a.x, y, a.z, 0.22, 0.10, col, ci*17 + 3, 8);
     bola(G, a.x + ux*0.12, y + 0.07, a.z + uz*0.12, 0.05, 0.08, BOIA, ci*17 + 4, 6);
   } else if(h < 0.58){                            // fanal, si no n'hi ha cap al costat
     if(fanals.has(ci)){ const p = entre(c, A, 0.7); fanal(G, p.x, y, p.z); }
   } else if(h < 0.66){                            // banc mirant l'aigua
     banc(G, a.x, a.z, ux, uz, y);
+    BANCS.push({ci, k, x: a.x, z: a.z, ux, uz, y, mar: true}); OBST.set(ci, k);
   }
 }
 

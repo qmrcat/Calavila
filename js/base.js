@@ -23,6 +23,7 @@
      consulta.js          només consulta: la fitxa que diu què és cada element
      poble.js             estat del poble, anàlisi i construcció de la malla
      escena.js            llums, mar, barques, gavines, dia i nit
+     gent.js              la gent: vianants, gossos i gats, i gent als bancs, a la platja i pescant
      controls.js          ressaltat, càmera, ratolí i tàctil, botons, teclat
      partida.js           desar, desfer i exportar
      main.js              bucle d'animació i arrencada

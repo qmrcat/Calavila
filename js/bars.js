@@ -118,6 +118,9 @@ function facanaBarG(G, cel, ci){
   const P = (t, y, o) => [S.x + dx*t + nx*o, y, S.z + dz*t + nz*o];
   const q = (t0, t1, ya, yb, o, col, GG = G) => cara(GG, P(t0,ya,o), P(t1,ya,o), P(t1,yb,o), P(t0,yb,o), col, N);
   const f = {G, P, q, len, ux, uz, nx, nz, N, y0: base[ci]*ALT, ci};
+  // la porta, per on entra i surt la gent: al mig a l'hotel, i a la dreta de l'aparador a les botigues
+  const tp = bar[ci] === 6 ? 0.5 : 0.75;
+  PORTES.push({ci, e, x: S.x + dx*tp, z: S.z + dz*tp, nx, nz, y: base[ci]*ALT, local: true});
   if(bar[ci] === 6) hotelG(f);
   else botigaG(f, bar[ci]);
 }
@@ -291,6 +294,7 @@ function terrassa(G, cel, ci, y){
     const A = cel.p[k], B = cel.p[(k+1)%4], l = Math.hypot(B.x-A.x, B.z-A.z) || 1;
     const vx = (B.x-A.x)/l, vz = (B.z-A.z)/l;
     for(const s of [-1, 1]) cadira(G, p.x + vx*s*0.15, y, p.z + vz*s*0.15, -vx*s, -vz*s, colCad);
+    TAULES.push({ci, k, x: p.x, z: p.z, vx, vz, y, rest});   // hi pot seure gent
     // para-sol, al bar; al restaurant, una espelma
     if(!rest){
       con(G, p.x, p.z, 0.008, 0.008, y + 0.18, y + 0.52, 4, FUSTA, false);

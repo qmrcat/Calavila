@@ -494,9 +494,11 @@ function mobiliari(G, cel, ci, y, sotaVolta){
     const k = Math.floor(hash3(ci,24,4)*4), A = cel.p[k], B = cel.p[(k+1)%4];
     const m = entre(entre(A,B,0.5), c, 0.32), l = Math.hypot(B.x-A.x, B.z-A.z) || 1;
     banc(G, m.x, m.z, (B.x-A.x)/l, (B.z-A.z)/l, y);
+    BANCS.push({ci, k, x: m.x, z: m.z, ux: (B.x-A.x)/l, uz: (B.z-A.z)/l, y, mar: false}); OBST.set(ci, k);   // hi pot seure gent
   } else if(h < 0.43){                            // fanal, si no n'hi ha cap al costat (vegeu triaFanals)
     if(fanals.has(ci)){ const a = capA(Math.floor(hash3(ci,23,4)*4), 0.72); fanal(G, a.x, y, a.z); }
   } else if(h < 0.53 && !sotaVolta){              // arbre de plaça
     arbre(G, c.x, y, c.z, 0.95, ci);
+    OBST.set(ci, -1);                             // la gent hi passa pel costat
   }
 }

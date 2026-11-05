@@ -13,6 +13,7 @@ function anima(t){
   if(!calma){
     if(gavinesActives) mouGavines(t/1000);
     giraRotors(t/1000);                                 // les pales dels aerogeneradors
+    if(ambGent) mouGent(dt);                            // la gent que camina
     const s = t*0.0009;
     for(let i=0;i<pos.count;i++){
       const x = marBase[i*3], z = marBase[i*3+2];

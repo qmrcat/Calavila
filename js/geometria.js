@@ -188,6 +188,7 @@ function paret(G, A, B, y0, y1, col, ci, L, e, plantaBaixa, donaCarrer, especial
     forat(t0, t1, y0+0.02, yt, 0.010, FOSC);
     forat(t0+0.014/len, t1-0.014/len, y0+0.02, yt-0.014, 0.020, colorPorta(ci));
     lleixa(t0-fm, t1+fm, y0+0.05, y0+0.13, 0.07, PEDRA);                    // graó
+    if(donaCarrer && !local) PORTES.push({ci, e, x: A.x + ux*len*0.5, z: A.z + uz*len*0.5, nx, nz, y: y0, local: false});   // per on entra i surt la gent
     return;
   }
 
