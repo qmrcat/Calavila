@@ -59,8 +59,9 @@ button:disabled{opacity:.38; cursor:default}
 .row #btn-treure.on, .row #btn-treure.on:hover{background:var(--teula); border-color:var(--teula); color:var(--calc)}
 .seg{display:flex; gap:0; margin-top:10px; border:1px solid rgba(20,82,107,.25); border-radius:2px; overflow:hidden}
 .seg button{border:0; border-radius:0; padding:7px 2px; font-size:11px; min-width:0}
-.seg-2{margin-top:6px}
-.seg[hidden]{display:none}       /* el grup de Nadal, amagat sense els guarniments */          /* el segon grup de modes, a tocar del primer */
+.seg-2{margin-top:6px}          /* les altres files de modes, a tocar de la primera */
+.seg-2 button{flex:1 1 0}        /* totes del mateix ample: les dues files fan columnes */
+.seg[hidden]{display:none}       /* el grup de Nadal, amagat sense els guarniments */
 .seg button + button{border-left:1px solid rgba(20,82,107,.25)}
 .seg button.on, .row button.on{background:var(--mar); color:var(--calc)}
 .paleta{display:flex; flex-wrap:wrap; gap:5px; margin-top:10px}

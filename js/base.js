@@ -18,7 +18,7 @@
      bars.js              locals: bars, restaurants (amb terrassa), botigues i hotels
      diada.js             la Diada: senyeres i estelades a balcons, finestres i terrats
      festa.js             la Festa Major: damassos, banderetes i gegants
-     cobertes-carrers.js  cantonades, voltes, cobertes, carrers i escales
+     cobertes-carrers.js  cantonades, voltes, cobertes, carrers, gespa i escales
      teulades.js          tipus de teulades (quatre, dues i una aigua) i de terrats (ampit, barana, golfes)
      energia.js           aerogeneradors (a la mar o a la muntanya) i plaques solars
      consulta.js          només consulta: la fitxa que diu què és cada element

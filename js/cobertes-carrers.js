@@ -470,13 +470,58 @@ function escala(G, cel, ci, e, y0, y1){
   }
 }
 
+/* --- gespa: un carrer o una plaça amb herba en lloc de llambordes --- */
+const HERBA = ['#7f9c50','#88a557','#77934b','#8fab5e'].map(C);
+const FLORS_GESPA = ['#f6f2e6','#ecc94b','#b993d0','#f6f2e6'].map(C);   // margarides, botons d'or i violetes
+// es veu gespa: un carrer o una plaça plans que no són moll ni roca (una escala, encara que s'hi posi, és de pedra)
+const esGespa = ci => ci >= 0 && gespa[ci] > 0 && esCarrer[ci] && heights[ci] === 0 && escalaE[ci] < 0 && !moll[ci] && !roca[ci];
+// es pot fer gespa aquí (o alçar la que hi ha)? a l'aigua, en un carrer, una plaça, un moll o la roca; no sota una casa ni un pont
+const potGespa = ci => ci >= 0 && heights[ci] === 0 && !pont[ci] && !molins[ci] && !(gespa[ci] && carrer[ci] && nivell[ci] >= NIV_MAX);
+
+// l'herba, en trossos de verds diferents, amb alguna mata i alguna flor
+function herba(G, bl, ci, y){
+  const M = 3;
+  for(let i=0;i<M;i++) for(let j=0;j<M;j++){
+    const c0 = bl(i/M,j/M), c1 = bl((i+1)/M,j/M), c2 = bl((i+1)/M,(j+1)/M), c3 = bl(i/M,(j+1)/M);
+    quad(G, [c0.x,y,c0.z], [c1.x,y,c1.z], [c2.x,y,c2.z], [c3.x,y,c3.z], HERBA[Math.floor(hash3(ci, i, j+60)*HERBA.length)]);
+  }
+  const ll = (ci*2654435761) | 0;
+  const nMates = Math.floor(hash3(ci,61,1)*3);    // de cap a dues mates d'herba més alta
+  for(let i=0;i<nMates;i++){
+    const a = bl(0.15 + hash3(ci,i,62)*0.7, 0.15 + hash3(ci,i,63)*0.7);
+    bola(G, a.x, y, a.z, 0.05, 0.045, fosc(HERBA[i % HERBA.length], 0.82), ll + i, 5);
+  }
+  if(hash3(ci,64,1) < 0.55){                       // una clapa de flors d'un sol color
+    const col = FLORS_GESPA[Math.floor(hash3(ci,64,2)*FLORS_GESPA.length)];
+    const u = 0.2 + hash3(ci,64,3)*0.6, v = 0.2 + hash3(ci,64,4)*0.6;
+    for(let i=0;i<4;i++){
+      const a = bl(u + (hash3(ci,i,65) - 0.5)*0.22, v + (hash3(ci,i,66) - 0.5)*0.22);
+      bola(G, a.x, y, a.z, 0.018, 0.022, col, ll + 7 + i, 4);
+    }
+  }
+}
+
+// una mata de jardí, amb flors o sense
+function mata(G, x, y, z, k, esc=1){
+  const ll = (k*2246822519) | 0;
+  bola(G, x, y, z, 0.13*esc, 0.17*esc, VERD, ll);
+  if(hash3(k,3,67) < 0.6){
+    const flor = hash3(k,4,67) < 0.5 ? BUGA : GERANI;
+    for(let i=0;i<4;i++){
+      const a = hash3(k,i,68)*6.283, d = 0.08*esc*(0.4 + hash3(k,i,69)*0.6);
+      bola(G, x + Math.cos(a)*d, y + 0.1*esc + hash3(k,i,70)*0.05*esc, z + Math.sin(a)*d, 0.03*esc, 0.04*esc, flor, ll + i, 5);
+    }
+  }
+}
+
 function paviment(G, cel, ci){
   const p = cel.p;
   const Y = nvC[ci].map(l => l*ALT + CARRER_Y);
   const e = escalaE[ci];
   if(e < 0){
     const bl = (u,v) => entre(entre(p[0],p[1],u), entre(p[3],p[2],u), v);
-    llambordes(G, bl, ci, Y[0]);
+    if(esGespa(ci)) herba(G, bl, ci, Y[0]);
+    else llambordes(G, bl, ci, Y[0]);
     return {y: Y[0], pla: true};
   }
   escala(G, cel, ci, e, Y[(e+2)%4], Y[e]);
@@ -493,7 +538,11 @@ function mobleCarrer(ci){
 function mobiliari(G, cel, ci, y, sotaVolta){
   const moble = mobleCarrer(ci), c = cel.c;
   const capA = (k, f) => entre(c, cel.p[k], f);   // punt entre el centre i un cantó
-  if(moble === 'testos'){                         // un o dos testos amb flors
+  if(moble === 'testos' && esGespa(ci)){          // a la gespa, en lloc de testos, una o dues mates
+    const k = Math.floor(hash3(ci,22,4)*4), a = capA(k, 0.58);
+    mata(G, a.x, y, a.z, ci);
+    if(hash3(ci,22,5) < 0.5){ const b = capA((k+1)%4, 0.6); mata(G, b.x, y, b.z, ci + 7919, 0.8); }
+  } else if(moble === 'testos'){                  // un o dos testos amb flors
     const k = Math.floor(hash3(ci,22,4)*4), a = capA(k, 0.6);
     test(G, a.x, y, a.z, ci);
     if(hash3(ci,22,5) < 0.5){ const b = capA((k+1)%4, 0.62); test(G, b.x, y, b.z, ci + 7919, 0.8); }

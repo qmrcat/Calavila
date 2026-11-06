@@ -22,6 +22,7 @@ function marcarHover(ci){
               : mode === 'escala' ? (escalaE[ci] >= 0 || sentitsEscala(ci).length > 0)
               : mode === 'roca' ? potRoca(ci)
               : mode === 'platja' ? (esSorra[ci] || potPlatja(ci))
+              : mode === 'gespa' ? potGespa(ci)
               : mode === 'teulada' ? (heff[ci] > 0 && escalaE[ci] < 0 && !tipusTorre[ci])
               : mode === 'mercat' ? (mercat[ci] > 0 || potMercat(ci))
               : mode === 'bar' ? potBar(ci)
@@ -270,6 +271,19 @@ cv.addEventListener('pointerup', e=>{
         else if(fars[ci]) avis('Aquí hi ha un far. Treu-lo primer amb el botó dret.');
         else if(!potPlatja(ci)) avis('La platja ha de tocar terra, un carrer o una altra platja.');
         else { platja[ci] = 1; avis('Platja feta. Torna-hi a clicar per posar-hi un para-sol, unes gandules, una barca...'); }
+      } else if(mode === 'gespa'){
+        // l'aigua, un carrer, una plaça, un moll o la roca es tornen gespa, al nivell que tenien;
+        // a la gespa, cada clic l'enlaira un nivell, com un carrer
+        if(heights[ci] > 0) avis('Aquí hi ha una casa. La gespa es fa al costat; o treu-la primer amb el botó dret.');
+        else if(pont[ci]) avis('Aquí hi ha un pont. Treu-lo primer amb el botó dret.');
+        else if(gespa[ci] && carrer[ci]){
+          if(nivell[ci] >= NIV_MAX) avis('La gespa ja és tan alta com pot ser.');
+          else { nivell[ci]++; enlairat = ci; }
+        } else {
+          if(!carrer[ci] && !esCarrer[ci]) nivell[ci] = 0;
+          carrer[ci] = true; gespa[ci] = 1; roca[ci] = 0; moll[ci] = 0;
+          avis('Gespa feta. Torna-hi a clicar per enlairar-la; en mode Carrers, la tornes a pavimentar.');
+        }
       } else if(mode === 'roca'){
         if(heights[ci] > 0) avis('Aquí hi ha una casa. La roca es fa al costat; o treu-la primer amb el botó dret.');
         else if(pont[ci]) avis('Aquí hi ha un pont. Treu-lo primer amb el botó dret.');
@@ -280,12 +294,12 @@ cv.addEventListener('pointerup', e=>{
         } else {
           // l'aigua, un carrer, una plaça o un moll es tornen roca, al nivell que tenien
           if(!carrer[ci] && !esCarrer[ci]) nivell[ci] = 0;
-          carrer[ci] = true; roca[ci] = 1; moll[ci] = 0;
+          carrer[ci] = true; roca[ci] = 1; moll[ci] = 0; gespa[ci] = 0;
           avis('Roca feta. Torna-hi a clicar per alçar-la, o fes-hi una casa en mode Cases.');
         }
       } else if(mode === 'carrer'){
-        if(roca[ci] && carrer[ci] && heights[ci] === 0){
-          roca[ci] = 0;                   // s'obre un carrer a la roca, al mateix nivell
+        if((roca[ci] || gespa[ci]) && carrer[ci] && heights[ci] === 0){
+          roca[ci] = 0; gespa[ci] = 0;    // s'obre un carrer a la roca, o es pavimenta la gespa, al mateix nivell
           avis('');
         } else if(carrer[ci] && heights[ci] === 0){
           nivell[ci] = Math.min(NIV_MAX, nivell[ci]+1);
@@ -350,7 +364,7 @@ function treuElement(ci){
   if(platja[ci]){ platja[ci] = platja[ci] > 1 ? 1 : 0; return; }   // primer el que hi ha a sobre, i després l'arena
   if(carrer[ci]){
     if(nivell[ci] > 0) nivell[ci]--;
-    else { carrer[ci] = false; moll[ci] = 0; roca[ci] = 0; mercat[ci] = 0; }
+    else { carrer[ci] = false; moll[ci] = 0; roca[ci] = 0; mercat[ci] = 0; gespa[ci] = 0; }
     return;
   }
   avis(esCarrer[ci] ? 'Aquesta plaça es fa sola: treu alguna de les cases del voltant.' : 'Aquí no hi ha res per treure.');
@@ -384,7 +398,7 @@ addEventListener('resize', ()=>{
 /* ---------- 8. Botons ---------- */
 
 const botons = {casa:'m-casa', carrer:'m-carrer', volta:'m-volta', pintar:'m-pintar', bar:'m-bar', teulada:'m-teulada',
-                pont:'m-pont', moll:'m-moll', far:'m-far', escala:'m-escala', roca:'m-roca', platja:'m-platja', energia:'m-energia', mercat:'m-mercat'};
+                pont:'m-pont', moll:'m-moll', far:'m-far', escala:'m-escala', roca:'m-roca', platja:'m-platja', gespa:'m-gespa', energia:'m-energia', mercat:'m-mercat'};
 function posaMode(m){
   mode = m;
   for(const k in botons){
@@ -403,6 +417,7 @@ function posaMode(m){
      : m === 'roca' ? 'Clica l\'aigua o un carrer per fer-hi roca, i torna-hi a clicar per alçar-la. Les roques veïnes fan muntanya, i a sobre s\'hi poden fer cases.'
      : m === 'teulada' ? 'Clica una casa per triar-ne la teulada: a quatre, a dues o a una aigua, o terrat amb ampit, amb barana i estenedors o amb golfes. El botó dret la torna automàtica.'
      : m === 'energia' ? 'Clica una casa per posar-hi plaques solars, a la teulada o al terrat. Clica la mar o el cim d\'una muntanya per alçar-hi un aerogenerador.'
+     : m === 'gespa' ? 'Clica l\'aigua, un carrer, una plaça o la roca per fer-hi gespa, i torna-hi a clicar per enlairar-la. S\'hi pot passejar, i s\'hi poden fer cases a sobre.'
      : m === 'platja' ? 'Clica l\'aigua arran de costa per fer-hi platja. Clicant la platja, hi poses un para-sol, unes gandules, un llaüt, un patí de vela, la cadira del socorrista o un castell de sorra.'
      : '');
   if(hoverCi >= 0) marcarHover(hoverCi);
@@ -440,6 +455,7 @@ addEventListener('keydown', e=>{
   if(k === '0' && nadal) posaMode('mercat');
   if(k === 'b') posaMode('bar');
   if(k === 'l') posaMode('platja');
+  if(k === 'h') posaMode('gespa');
   if(k === 't') posaMode('teulada');
   if(k === 'e') posaMode('energia');
   if(k === 'x') posaTreure(!modeTreure);
@@ -534,7 +550,7 @@ function posaMida(m){
 }
 for(const k in botonsMida) document.getElementById(botonsMida[k]).onclick = ()=>posaMida(k);
 document.getElementById('btn-buida').onclick = ()=>{
-  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0); mercat.fill(0); bar.fill(0); porxo.fill(0); platja.fill(0); teulada.fill(0); molins.fill(0); solar.fill(0);
+  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0); mercat.fill(0); bar.fill(0); porxo.fill(0); platja.fill(0); teulada.fill(0); molins.fill(0); solar.fill(0); gespa.fill(0);
   construirMalla(); instantania();
   avis('Cala buidada. Es pot desfer amb ↶.');
 };

@@ -20,7 +20,7 @@ function serialitza(){
   };
   return [MARCA, seed, n, autoPlaces ? 1 : 0,
           enc(heights,0), enc(carrer,0), enc(nivell,0), enc(forcat,0), enc(tint,1), enc(pont,0),
-          enc(moll,0), midaCala, enc(fars,0), enc(escales,0), enc(roca,0), enc(mercat,0), enc(bar,0), enc(porxo,0), enc(platja,0), enc(teulada,0), enc(molins,0), enc(solar,0)].join('|');
+          enc(moll,0), midaCala, enc(fars,0), enc(escales,0), enc(roca,0), enc(mercat,0), enc(bar,0), enc(porxo,0), enc(platja,0), enc(teulada,0), enc(molins,0), enc(solar,0), enc(gespa,0)].join('|');
 }
 
 function deserialitza(txt){
@@ -29,11 +29,11 @@ function deserialitza(txt){
   const sd = +p[1], n = +p[2];
   if(p.length < 9 || !Number.isInteger(sd) || !Number.isInteger(n) || n < 1) throw new Error('Capçalera malmesa.');
   // els camps dels ponts (10è), dels molls (11è), de la mida (12è), dels fars (13è), de les escales (14è)
-  // de la roca (15è), del mercat de Nadal (16è), dels bars (17è), dels porxos (18è), de la platja (19è), de les teulades triades (20è), dels aerogeneradors (21è) i de les plaques solars (22è) són posteriors: les partides antigues no els tenen. Tots tenen un caràcter per
+  // de la roca (15è), del mercat de Nadal (16è), dels bars (17è), dels porxos (18è), de la platja (19è), de les teulades triades (20è), dels aerogeneradors (21è), de les plaques solars (22è) i de la gespa (23è) són posteriors: les partides antigues no els tenen. Tots tenen un caràcter per
   // cel·la, menys la mida
   const nCamps = Math.min(p.length, 11);
   for(let k=4;k<nCamps;k++) if(p[k].length !== n) throw new Error('Les dades no quadren amb el nombre de cel·les.');
-  for(let k=12;k<Math.min(p.length, 22);k++) if(p[k].length !== n) throw new Error('Les dades no quadren amb el nombre de cel·les.');
+  for(let k=12;k<Math.min(p.length, 23);k++) if(p[k].length !== n) throw new Error('Les dades no quadren amb el nombre de cel·les.');
   const mida = p.length >= 12 ? p[11] : 'normal';
   if(!esMida(mida)) throw new Error('Mida de cala desconeguda.');
 
@@ -61,6 +61,7 @@ function deserialitza(txt){
   const te = p.length >= 20 ? dec(p[19], 0, ESTILS.length) : new Array(n).fill(0);
   const mi = p.length >= 21 ? dec(p[20], 0, 1) : new Array(n).fill(0);
   const so = p.length >= 22 ? dec(p[21], 0, 1) : new Array(n).fill(0);
+  const ge = p.length >= 23 ? dec(p[22], 0, 1) : new Array(n).fill(0);
 
   let noves = null;                                 // la cala és determinista
   if(sd !== seed || mida !== midaCala || cells.length !== n){
@@ -85,6 +86,7 @@ function deserialitza(txt){
   teulada = te;
   molins  = mi;
   solar   = so;
+  gespa   = ge;
   autoPlaces = p[3] === '1';
   // abans la platja sortia sola: a les partides antigues es torna a fer com llavors
   if(pl) platja = pl;

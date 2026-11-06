@@ -10,7 +10,7 @@
    responen. Clicant una cel·la, al costat del cursor surt una
    fitxa que diu què hi ha: una casa (amb els pisos, el color, el
    local i la teulada), un carrer, una plaça, una escala, un moll,
-   una parada del mercat de Nadal, la platja, un pont, la mar...
+   una parada del mercat de Nadal, la platja, la gespa, un pont, la mar...
    ============================================================ */
 
 let consulta = false;
@@ -85,9 +85,11 @@ function descriuCella(ci){
       d.push(carrer[ci] ? 'en un carrer' : 'en una plaça');
     } else {
       const cases = cells[ci].nb.filter(b => b >= 0 && heights[b] > 0).length;
-      t = !carrer[ci] ? 'Plaça' : cases >= 3 ? 'Plaça' : 'Carrer';
+      t = esGespa(ci) ? 'Gespa' : !carrer[ci] ? 'Plaça' : cases >= 3 ? 'Plaça' : 'Carrer';
       if(!carrer[ci]) d.push('s\'ha fet sola, envoltada de cases');
+      if(esGespa(ci)) d.push(cases >= 3 ? 'una plaça d\'herba, entre cases' : 'herba on es pot passejar');
     }
+    if(esGespa(ci) && t !== 'Gespa') d.push('sobre la gespa');
     if(alt) d.push(alt);
     if(roca[ci]) d.push('obert a la muntanya');
     if(gegantsAqui(ci)) d.push('hi ha els gegants');

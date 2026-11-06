@@ -8,6 +8,7 @@ let moll = [];   // 1 = aquest carrer és un moll de port
 let escales = []; // escala posada a mà: l'aresta cap on puja + 1 (0 = cap)
 let fars = [];   // 1 = un far posat a mà (sobre l'aigua fa un illot; sobre un carrer, hi va dret)
 let roca = [];   // 1 = el terreny d'aquesta cel·la és roca de muntanya, no paviment
+let gespa = [];  // 1 = el terreny d'aquesta cel·la és gespa, no paviment (vegeu esGespa)
 let mercat = []; // 1 = una parada del mercat de Nadal (només es veu amb els guarniments)
 let bar = [];    // 1 = la planta baixa de la casa és un bar; 2, un restaurant
 let porxo = [];  // 1 = la planta baixa de la casa és un porxo obert, amb arcs
@@ -443,6 +444,7 @@ function novaCala(s, mida = midaCala){
   fars    = new Array(cells.length).fill(0);
   escales  = new Array(cells.length).fill(0);
   roca    = new Array(cells.length).fill(0);
+  gespa   = new Array(cells.length).fill(0);
   mercat  = new Array(cells.length).fill(0);
   bar     = new Array(cells.length).fill(0);
   porxo   = new Array(cells.length).fill(0);
@@ -456,7 +458,7 @@ function novaCala(s, mida = midaCala){
 // la llavor del poble va a part de la de la cala: `seed` ha de ser sempre
 // la que ha fet la quadrícula, perquè és la que es desa a la partida
 function generarPoble(llavor = seed + 991){
-  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0); mercat.fill(0); bar.fill(0); porxo.fill(0); platja.fill(0); teulada.fill(0); molins.fill(0); solar.fill(0);
+  heights.fill(0); carrer.fill(false); nivell.fill(0); forcat.fill(false); tint.fill(-1); pont.fill(0); moll.fill(0); fars.fill(0); escales.fill(0); roca.fill(0); mercat.fill(0); bar.fill(0); porxo.fill(0); platja.fill(0); teulada.fill(0); molins.fill(0); solar.fill(0); gespa.fill(0);
   const rnd = mulberry32(llavor);
   let inici = 0, millor = Infinity;
   cells.forEach((c,i)=>{ const d = Math.hypot(c.c.x, c.c.z); if(d < millor){ millor = d; inici = i; } });

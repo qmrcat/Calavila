@@ -12,7 +12,7 @@ Cal connexió a internet la primera vegada, perquè three.js es carrega des de l
 
 ## Com es juga
 
-Tria un mode al panell i clica sobre la quadrícula. Els modes van en dos grups: el primer, per fer el poble (**Cases**, **Carrers**, **Voltes**, **Pintar**, **Locals**, **Teulades**), i el segon, per a les obres i el relleu (**Ponts**, **Molls**, **Fars**, **Escales**, **Muntanya**, **Platja**, **Energia**). En els modes que tenen condicions, la cel·la sota el cursor es pinta de verd si s'hi pot construir i de vermell si no.
+Tria un mode al panell i clica sobre la quadrícula. Els modes van en tres files: la primera, per fer el poble (**Cases**, **Carrers**, **Voltes**, **Pintar**, **Locals**, **Teulades**); la segona, per a les obres (**Ponts**, **Molls**, **Fars**, **Escales**), i la tercera, per als terrenys i l'energia (**Muntanya**, **Platja**, **Gespa**, **Energia**). En els modes que tenen condicions, la cel·la sota el cursor es pinta de verd si s'hi pot construir i de vermell si no.
 
 | Mode | Què fa |
 |---|---|
@@ -28,6 +28,7 @@ Tria un mode al panell i clica sobre la quadrícula. Els modes van en dos grups:
 | **Escales** | Posa una escala que puja un nivell des d'un lloc pla: un carrer, un terrat o el cap d'una altra escala (vegeu *Escales*). |
 | **Muntanya** | Fa terreny de roca. Si hi tornes a clicar, l'alça un nivell. Les roques veïnes fan muntanya, i a sobre s'hi poden fer cases (vegeu *Muntanya*). |
 | **Platja** | Fa platja d'arena a l'aigua arran de costa. Si hi tornes a clicar, hi posa un para-sol, unes gandules, una barca... (vegeu *Platja*). |
+| **Gespa** | Fa terreny d'herba en lloc de paviment: carrers, places i jardins on es pot passejar i construir. Si hi tornes a clicar, l'enlaires un nivell (vegeu *Gespa*). |
 | **Energia** | Posa plaques solars a la teulada o al terrat d'una casa, o alça un aerogenerador a la mar o al cim d'una muntanya (vegeu *Energia*). |
 
 ### Treure
@@ -163,6 +164,18 @@ Després del darrer, torna a ser arena llisa. Les coses es posen a la part més 
 
 El botó dret primer treu el que hi ha a sobre, i després l'arena. Si hi fas una casa, un carrer, un pont o un far, la platja se'n va. Cada **Poble nou** té una platja en un tram de costa, amb algun para-sol, gandules i barques. Les partides desades abans tenien la platja automàtica, i quan les obres, es torna a fer com sortia llavors.
 
+### Gespa
+
+En mode **Gespa** (tecla <kbd>H</kbd>), clica l'aigua, un carrer, una plaça, un moll o la roca, i s'hi fa un terreny d'herba, al nivell que tenia. La gespa és com un carrer amb herba en lloc de llambordes: s'hi passeja, s'hi poden fer cases, voltes, escales, fars i parades, i compta com a terra per als ponts i les platges.
+
+- **Enlairar-la:** cada clic més a la mateixa gespa l'enlaira un nivell, com un carrer, i els costats que queden a l'aire són de pedra. Per pujar-hi, posa-hi una escala al costat.
+- **Com es veu:** l'herba fa clapes de verds diferents, amb alguna mata més alta i, de vegades, flors blanques, grogues o liles. Com als carrers, hi pot haver bancs, fanals i arbres, i on en un carrer hi hauria testos, a la gespa hi ha mates de jardí, a vegades florides.
+- **Escales:** una escala posada a la gespa és de pedra. Si la treus, hi torna a haver l'herba.
+- **Tornar-la a pavimentar:** en mode **Carrers**, un clic a la gespa la fa carrer, al mateix nivell. En mode **Muntanya**, la fa roca.
+- **Treure-la:** el botó dret la baixa un nivell, i a nivell zero la torna aigua.
+
+Sota una casa la gespa no es veu, però s'hi queda: si treus la casa pis a pis, torna a sortir. La gespa es desa a la partida.
+
 ### Energia
 
 En mode **Energia** (tecla <kbd>E</kbd>) hi ha dues coses:
@@ -241,7 +254,7 @@ Amb **Només consulta** activat, el poble es pot mirar però no canviar. Va bé 
 - **Què és cada cosa:** clica qualsevol cel·la i, al costat del cursor, surt una fitxa que diu què hi ha:
   - **Casa:** els pisos, el color, el porxo, el local de la planta baixa, la teulada (i si s'ha triat a mà), si té plaques solars, i si per Nadal o per la Diada està guarnida.
   - **Torre:** campanar o torre de guaita.
-  - **Carrer o plaça:** si està enlairat, i si hi ha fanal, gegants, arbre de Nadal, llums o banderetes.
+  - **Carrer, plaça o gespa:** si està enlairat, i si hi ha fanal, gegants, arbre de Nadal, llums o banderetes.
   - **Escala, moll, terrassa, parada del mercat de Nadal o far.**
   - **Volta, pont o embarcador.**
   - **Muntanya de roca:** amb l'alçada, i si al cim hi ha un far o un aerogenerador.
@@ -335,6 +348,7 @@ Tots van junts, com en una trobada de gegants:
 | <kbd>5</kbd>–<kbd>9</kbd> | Ponts, Molls, Fars, Escales, Muntanya |
 | <kbd>B</kbd> | Locals: bars, restaurants, botigues i hotels |
 | <kbd>L</kbd> | Platja |
+| <kbd>H</kbd> | Gespa |
 | <kbd>T</kbd> | Teulades |
 | <kbd>E</kbd> | Energia: plaques solars i aerogeneradors |
 | <kbd>0</kbd> | Mercat de Nadal (amb els guarniments activats) |
@@ -382,7 +396,7 @@ La partida es desa sola al navegador (`localStorage`). Amb el botó **Partida…
 - baixar-la com a fitxer `.cala`,
 - carregar-ne una d'enganxada o d'un fitxer.
 
-Una partida és una sola línia de text, i ocupa uns quants kB. Conté la llavor i la mida de la cala, que és determinista i es torna a generar igual, i un caràcter per cel·la per a cada camp. Les partides desades amb versions anteriors (sense ponts, molls, mida, fars, escales, roca, mercat, bars, porxos, platja, teulades triades, aerogeneradors o plaques solars) es continuen carregant.
+Una partida és una sola línia de text, i ocupa uns quants kB. Conté la llavor i la mida de la cala, que és determinista i es torna a generar igual, i un caràcter per cel·la per a cada camp. Les partides desades amb versions anteriors (sense ponts, molls, mida, fars, escales, roca, mercat, bars, porxos, platja, teulades triades, aerogeneradors, plaques solars o gespa) es continuen carregant.
 
 ## Estructura del codi
 
@@ -401,7 +415,7 @@ js/
   bars.js              locals: bars, restaurants (amb terrassa), botigues i hotels
   diada.js             la Diada: senyeres i estelades a balcons, finestres i terrats
   festa.js             la Festa Major: damassos, banderetes i gegants
-  cobertes-carrers.js  cantonades, voltes, cobertes, carrers i escales
+  cobertes-carrers.js  cantonades, voltes, cobertes, carrers, gespa i escales
   teulades.js          tipus de teulades (quatre, dues i una aigua) i de terrats (ampit, barana, golfes)
   energia.js           aerogeneradors (a la mar o a la muntanya) i plaques solars
   consulta.js          només consulta: la fitxa que diu què és cada element
