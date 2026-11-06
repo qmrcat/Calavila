@@ -56,7 +56,7 @@ function paretMoll(G, A, B, tA, tB, ci, e, c){
   quad(G, [Ao.x,tA-0.06,Ao.z], [Bo.x,tB-0.06,Bo.z], [Bo.x,tB+0.012,Bo.z], [Ao.x,tA+0.012,Ao.z], CANTELL);
 
   // norai al mig de la vora
-  if(hash3(ci, e, 140) < 0.6){
+  if(hash3(ci, e, 140) < PAR.norais){
     const m = entre(A, B, 0.5), y = (tA + tB)/2;
     const x = m.x - n.x*0.11, z = m.z - n.z*0.11;
     con(G, x, z, 0.045, 0.035, y, y+0.10, 6, FERRO, false);
@@ -159,7 +159,7 @@ function amarres(){
     const cel = cells[ci];
     for(let e=0;e<4;e++){
       const w = cel.nb[e];
-      if(!aiguaLliure(w) || ocupat.has(w) || hash3(w,170,1) > 0.7) continue;
+      if(!aiguaLliure(w) || ocupat.has(w) || hash3(w,170,1) >= PAR.barques) continue;
       const j = cells[w].nb.indexOf(ci);
       const laterals = [cells[w].nb[(j+1)%4], cells[w].nb[(j+3)%4]];
       if(!laterals.every(aiguaLliure) || laterals.some(b => ocupat.has(b))) continue;

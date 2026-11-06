@@ -46,6 +46,7 @@ let TAULES = [];        // {ci, k, x, z, vx, vz, y, rest}: les taules de les ter
 
 let XARXA = null;       // {via: Map ci -> {x, y, z}, veins: Map ci -> [{b, e, x, z}]}
 let portesDe = new Map();   // cel·la de carrer -> portes que hi donen
+let ambPorta = new Set();   // cel·les des d'on es pot arribar a alguna porta
 let bancsDe = new Map();    // cel·la -> bancs on es pot seure (amb clau: la cel·la i l'aresta)
 let AL_SOL = new Set(), PESCADORS = new Map(), A_TERRASSA = new Set();   // per a la fitxa de consulta (els pescadors, amb on són)
 let grups = [], gentDeDia = true, neixT = 0, rndGent = mulberry32(1);
@@ -510,6 +511,11 @@ function refaPortes(){
     if(!portesDe.has(st)) portesDe.set(st, []);
     portesDe.get(st).push(p);
   }
+  // els trossos de xarxa que tenen alguna porta
+  ambPorta = new Set();
+  const cua = [...portesDe.keys()];
+  for(const c of cua) ambPorta.add(c);
+  for(let i=0; i<cua.length; i++) for(const n of XARXA.veins.get(cua[i])) if(!ambPorta.has(n.b)){ ambPorta.add(n.b); cua.push(n.b); }
 }
 
 /* ============================================================
@@ -556,8 +562,10 @@ function nouGrup(gat, membres = null){
 // el pas següent, quan arriba al punt de pas d'una cel·la: cap a una porta si ja ha fet prou camí, o a l'atzar
 function planeja(g){
   if(!g.gat && g.passos <= 0){
-    if(potSeure(g) && rndGent() < 0.4 && camiBanc(g)) return;   // a seure una estona en un banc
+    const sobra = nGent() > objectiusGent()[0];      // si n'hi ha massa pel carrer, cap a casa
+    if(!sobra && potSeure(g) && rndGent() < 0.4 && camiBanc(g)) return;   // a seure una estona en un banc
     if(portesDe.size && camiPorta(g)) return;
+    if(sobra){ g.estat = 'fi'; return; }            // sobra i no té cap porta a l'abast: se'n va
     g.passos = 4 + Math.floor(rndGent()*6);
   }
   const l = XARXA.veins.get(g.ci) || [];
@@ -710,7 +718,7 @@ function marxa(g){
   g.ci = b.ci; g.bx = S.x; g.bz = S.z; g.dir = dir; g.yaw = g.seients[0].yaw; g.carril = 0;
   // una mica de petja al darrere, perquè l'acompanyant surti al seu costat
   g.petja = [{x: S.x - dx*0.3, y: g.y, z: S.z - dz*0.3, s: 0}, {x: S.x, y: g.y, z: S.z, s: 0.3}];
-  g.extra = 0; g.passos = 2 + Math.floor(rndGent()*8); g.ant = -1; g.entrada = -1; g.origen = g.porta = null;
+  g.extra = 0; g.passos = nGent() >= objectiusGent()[0] ? 0 : 2 + Math.floor(rndGent()*8); g.ant = -1; g.entrada = -1; g.origen = g.porta = null;
   g.banc = null; g.seients = null; g.estat = 'camina';
 }
 // assegut, o asseient-se o aixecant-se
@@ -728,7 +736,7 @@ function pasSeient(g, dt){
 function ompleBancs(){
   const persona = () => trets(gentDeDia && rndGent() < 0.2 ? (rndGent() < 0.5 ? 'nen' : 'nena') : (rndGent() < 0.5 ? 'home' : 'dona'), rndGent);
   for(const l of bancsDe.values()) for(const b of l){
-    if(hash3(b.ci, 760, 1) > (gentDeDia ? 0.55 : 0.22) || !bancLliure(b)) continue;
+    if(hash3(b.ci, 760, 1) >= (gentDeDia ? PAR.gentBancs : PAR.gentBancs*0.4) || !bancLliure(b)) continue;
     const ms = [{t: persona()}];
     if(hash3(b.ci, 760, 2) < 0.35){ const t = persona(); ms.push({t, lag: t.nen ? 0.02 : 0.01, costat: t.nen ? 0.1 : 0.115}); }
     const g = nouGrup(false, ms);
@@ -844,7 +852,8 @@ function neixPorta(){
   return true;
 }
 function neixCarrer(gat, simula){
-  const ll = [...XARXA.veins.keys()].filter(ci => XARXA.veins.get(ci).length);
+  // la gent, on pugui tornar a casa (si hi ha portes); els gats, a qualsevol lloc
+  const ll = [...XARXA.veins.keys()].filter(ci => XARXA.veins.get(ci).length && (gat || !ambPorta.size || ambPorta.has(ci)));
   if(!ll.length) return false;
   const ci = ll[Math.floor(rndGent()*ll.length)], v = XARXA.via.get(ci), g = nouGrup(gat);
   g.bx = v.x; g.bz = v.z; g.ci = ci;
@@ -858,7 +867,7 @@ function neixCarrer(gat, simula){
 // quants n'hi ha d'haver: segons les cases, i de nit menys
 function objectiusGent(){
   const cases = heights.filter(h => h > 0).length, n = XARXA ? XARXA.via.size : 0;
-  let gent = Math.round(Math.min(26, cases/5, n/3));
+  let gent = Math.round(Math.min(PAR.gentCarrer, cases/5, n/3));
   if(!gentDeDia) gent = Math.round(gent*0.4);
   return [gent, Math.min(3, Math.round(cases/30), Math.floor(n/6))];
 }
@@ -882,12 +891,12 @@ function mouGent(dt){
 
 // el punt (x, z) és dins la cel·la ci, o a tocar de la vora
 function dinsCella(ci, x, z, tol = 0.03){
-  const p = cells[ci].p;
-  let s = 0;
+  const p = cells[ci].p, m = cells[ci].c;
+  // el sentit de la cel·la, pel centre (el punt pot ser just a la vora, i llavors no el diu)
+  const s = Math.sign((p[1].x - p[0].x)*(m.z - p[0].z) - (p[1].z - p[0].z)*(m.x - p[0].x)) || 1;
   for(let k=0;k<4;k++){
     const A = p[k], B = p[(k+1)%4], l = Math.hypot(B.x - A.x, B.z - A.z) || 1;
     const c = ((B.x - A.x)*(z - A.z) - (B.z - A.z)*(x - A.x))/l;
-    if(k === 0) s = Math.sign(c) || 1;
     if(c*s < -tol) return false;
   }
   return true;
@@ -963,7 +972,8 @@ function quietaGent(){
   AL_SOL = new Set(); PESCADORS = new Map(); A_TERRASSA = new Set();
   // a les terrasses: a cada taula, ningú, una persona o dues, cara a cara (de nit, el restaurant s'omple més que el bar)
   for(const tb of TAULES){
-    if(hash3(tb.ci, tb.k, 764) > (gentDeDia ? (tb.rest ? 0.45 : 0.6) : (tb.rest ? 0.65 : 0.35))) continue;
+    const pt = PAR.gentTerrasses;   // de dia, el bar s'omple més que el restaurant; de nit, al revés
+    if(hash3(tb.ci, tb.k, 764) >= Math.min(1, gentDeDia ? (tb.rest ? pt*0.75 : pt) : (tb.rest ? pt*1.08 : pt*0.58))) continue;
     const rnd = mulberry32(tb.ci*7717 + tb.k*131 + (gentDeDia ? 0 : 5));
     const costats = hash3(tb.ci, tb.k, 765) < 0.55 ? [-1, 1] : [hash3(tb.ci, tb.k, 766) < 0.5 ? -1 : 1];
     for(const s of costats){
@@ -979,7 +989,7 @@ function quietaGent(){
     const {ci, bl, hy} = sr, el = platja[ci], rnd = mulberry32(ci*104729 + 7);
     if(el === 1 || el === 2){
       // a l'arena, una tovallola; amb para-sol, a la seva ombra (on hi havia la tovallola petita)
-      if(hash3(ci, 761, 1) > (el === 1 ? 0.5 : 0.75)) continue;
+      if(hash3(ci, 761, 1) >= Math.min(1, PAR.gentPlatja*(el === 1 ? 0.83 : 1.25))) continue;
       const u = el === 1 ? llocSec(hy).u : Math.min(0.76, Math.max(0.24, ((0.35 + hash3(ci, 62, 1)*0.3) > 0.5 ? 0.06 : 0.66) + 0.13));
       const capV = hy(u, 0.1) >= hy(u, 0.9) ? 0.1 : 0.9;   // el cap, cap amunt
       const A = bl(u, 1 - capV), B = bl(u, capV);
@@ -989,7 +999,7 @@ function quietaGent(){
       AL_SOL.add(ci);
     } else if(el === 3){
       // a les gandules: en una, mig incorporat contra el respatller
-      if(hash3(ci, 761, 2) > 0.6) continue;
+      if(hash3(ci, 761, 2) >= PAR.gentPlatja) continue;
       const L = llocElement(bl, hy, ci), cr = Math.cos(L.gir), sr = Math.sin(L.gir);
       const px = -0.06, pz = hash3(ci, 761, 3) < 0.5 ? 0.17 : -0.17;
       const O = [L.x + px*cr + pz*sr, L.y + 0.105, L.z - px*sr + pz*cr];
@@ -1063,6 +1073,7 @@ function refaGent(){
   if(nGent() < ng*0.5) for(let i = nGent(); i < Math.round(ng*0.85); i++) neixCarrer(false, true);
   while(nGats() < nt && neixCarrer(true, true));
   grups = grups.filter(g => g.estat !== 'fi');     // n'hi pot haver que, caminant, ja han entrat
+  sobrants();                                      // si ara n'hi ha d'haver menys (de nit, o pels paràmetres)
   compon();
 }
 function engegaGent(){
@@ -1077,6 +1088,15 @@ function treuGent(){
   if(gentMov) gentMov.visible = false;
   redibuixa();
 }
+// els que sobren pel carrer tornen cap a casa
+function sobrants(){
+  const [ng] = objectiusGent();
+  let n = 0;
+  for(const g of grups){
+    if(g.gat || g.banc || g.estat === 'fi') continue;
+    if(++n > ng) g.passos = 0;
+  }
+}
 // de dia o de nit: la platja es buida, i pel carrer i als bancs n'hi ha menys
 function horaGent(dia){
   const d = dia > 0.35;
@@ -1084,12 +1104,7 @@ function horaGent(dia){
   gentDeDia = d;
   if(!ambGent || !XARXA) return;
   quietaGent();
-  const [ng] = objectiusGent();
-  let n = 0;
-  for(const g of grups){
-    if(g.gat || g.banc) continue;
-    if(++n > ng) g.passos = 0;                      // els que sobren tornen cap a casa
-  }
+  sobrants();
   // de nit, la majoria dels que seuen als bancs s'aixequen aviat
   if(!d) for(const g of grups) if(g.estat === 'seu' && rndGent() < 0.65) g.espera = Math.min(g.espera, 1 + rndGent()*12);
 }

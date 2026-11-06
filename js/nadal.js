@@ -50,10 +50,10 @@ function garlanda(A, B, panxa, cols, llavor){
 }
 
 // quina mena de llums té cada casa o carrer: tot blanc calent, o de colors
-const colorsDe = ci => hash3(ci, 302, 1) < 0.45 ? [CALIDA] : BOMBETES;
+const colorsDe = ci => hash3(ci, 302, 1) < PAR.llumsBlanques ? [CALIDA] : BOMBETES;
 
 /* --- cases: garlanda sota el ràfec, per les façanes exteriors del darrer pis --- */
-const casaGuarnida = ci => hash3(ci, 301, 1) < 0.35;
+const casaGuarnida = ci => hash3(ci, 301, 1) < PAR.casesNadal;
 
 function garlandaCasa(G, cel, ci, h){
   const {ext, rodo} = cantons(cel, h - 1);
@@ -72,7 +72,7 @@ function garlandaCasa(G, cel, ci, h){
 /* --- carrers: tira de llums d'una façana a la de davant --- */
 // l'eix (0 o 1) on hi ha cases enfrontades prou altes per penjar-hi els llums, o -1
 function eixLlums(ci){
-  if(!esCarrer[ci] || span[ci] || esMunt(ci) || hash3(ci, 303, 1) > 0.8) return -1;
+  if(!esCarrer[ci] || span[ci] || esMunt(ci) || hash3(ci, 303, 1) >= PAR.carrersNadal) return -1;
   const sota = Math.max(...nvC[ci])*ALT + CARRER_Y + 1.15;   // prou amunt per passar-hi per sota
   const alta = b => b >= 0 && heff[b] > 0 && !span[b] && heff[b]*ALT > sota + 0.25 && base[b]*ALT < sota - 0.3;
   const nb = cells[ci].nb, prim = hash3(ci, 303, 2) < 0.5 ? 0 : 1;

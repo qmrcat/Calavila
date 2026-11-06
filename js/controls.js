@@ -656,6 +656,19 @@ document.getElementById('btn-gent').onclick = ()=>posaGent(!ambGent);
   posaGent(v === '1', true);   // per defecte, no n'hi ha; la malla es fa en arrencar
 }
 
+/* --- paràmetres (vegeu parametres.js): el panell s'obre i es tanca des de Configuració --- */
+{
+  const btn = document.getElementById('btn-params'), pan = document.getElementById('panel-params');
+  btn.onclick = ()=>{
+    const v = !pan.classList.contains('obert');
+    pan.classList.toggle('obert', v);
+    btn.classList.toggle('on', v);
+    btn.setAttribute('aria-expanded', v);
+  };
+  document.getElementById('btn-params-defecte').onclick = ()=>{ restableixParametres(); avis('Tots els paràmetres tornen a ser els de per defecte.'); };
+  muntaParametres();
+}
+
 /* --- només consulta: es recorda en aquest navegador --- */
 function posaConsulta(v){
   consulta = v;

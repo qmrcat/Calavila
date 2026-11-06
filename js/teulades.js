@@ -55,14 +55,14 @@ function estilCoberta(llista, h, clau, torre){
   if(triat && estilsPossibles(llista, clau).includes(triat)) return triat;
   if(llista.some(m => terratForcat[m])) return hash3(clau, 9, 5) < 0.5 ? 'terrat' : 'barana';
   if(torre) return 'quatre';
-  if(hash3(clau, 9, 2) < 0.30){
+  if(hash3(clau, 9, 2) < PAR.terrats){
     const s = hash3(clau, 9, 5);
     return s < 0.4 ? 'terrat' : s < 0.7 ? 'barana' : 'golfes';
   }
   // una casa sola arrambada a una de més alta: de vegades, teulada a una aigua que s'hi recolza
   if(llista.length === 1 && cells[clau].nb.some(b => b >= 0 && heff[b] > h) && hash3(clau, 9, 7) < 0.3) return 'una';
-  const s = hash3(clau, 9, 6);
-  return s < 0.45 ? 'quatre' : s < 0.92 ? 'dues' : llista.length === 1 ? 'una' : 'dues';
+  const s = hash3(clau, 9, 6), q = PAR.quatreAigues;
+  return s < q ? 'quatre' : s < q + (1 - q)*0.855 ? 'dues' : llista.length === 1 ? 'una' : 'dues';
 }
 
 // la normal cap enfora de l'aresta e d'una cel·la
@@ -128,7 +128,7 @@ function teuladaDuesAigues(G, llista, y, clau, pos, vora_, teu){
     apuntaDiada(ci, 1.5, () => banderaPal(G, m.x, yc - 0.03, m.z, 0.6, ci));
     if(ci === clau) xem = entre(M0, M1, 0.3);
   }
-  if(xem && hash3(clau,7,7) < 0.6 && !solar[clau]) xemeneia(G, xem.x, xem.z, y, yc + 0.16, colorParet(clau), teu);
+  if(xem && hash3(clau,7,7) < PAR.xemeneies && !solar[clau]) xemeneia(G, xem.x, xem.z, y, yc + 0.16, colorParet(clau), teu);
   return true;
 }
 
@@ -157,7 +157,7 @@ function teuladaUnaAigua(G, ci, y, pos, teu){
   }
   const c = cel.c;
   apuntaDiada(ci, 1.5, () => banderaPal(G, c.x, (y + yh)/2 - 0.03, c.z, 0.6, ci));
-  if(hash3(ci,7,7) < 0.6 && !solar[ci]){           // xemeneia, a la banda alta (si no hi ha plaques)
+  if(hash3(ci,7,7) < PAR.xemeneies && !solar[ci]){           // xemeneia, a la banda alta (si no hi ha plaques)
     const p = entre(c, entre(W(eH), W(eH+1), 0.5), 0.45);
     xemeneia(G, p.x, p.z, y, yh + 0.16, col, teu);
   }

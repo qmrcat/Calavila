@@ -93,8 +93,8 @@ function biga(G, A, B, y0, y1, w, col){
 // trets de cada casa, perquè totes les finestres d'una mateixa casa lliguin
 const colorPorticons = ci => PORTICONS[Math.floor(hash3(ci,12,5)*PORTICONS.length)];
 const colorPorta = ci => hash3(ci,14,3) < 0.5 ? colorPorticons(ci) : FUSTA;
-const ambArc   = ci => hash3(ci,13,2) < 0.22;                  // finestres de mig punt
-const teSocol  = ci => hash3(ci,3,3) < 0.55;
+const ambArc   = ci => hash3(ci,13,2) < PAR.finestresArc;                  // finestres de mig punt
+const teSocol  = ci => hash3(ci,3,3) < PAR.socol;
 const colSocol = (ci, col) => hash3(ci,3,4) < 0.5 ? fosc(col, 0.80) : SOCOL;
 const colMarc  = ci => tint[ci] > 0 ? MARC : PEDRA;            // façana pintada: marcs blancs
 const OMBRA = 0.80;     // foscor al peu de la façana (oclusió ambiental barata)
@@ -143,7 +143,7 @@ function paret(G, A, B, y0, y1, col, ci, L, e, plantaBaixa, donaCarrer, especial
   const local = barFront.get(ci) === e;
   // buguenvíl·lea: una tija que s'enfila i una mata florida que s'eixampla a dalt
   let tv = -1;
-  if(donaCarrer && !especial && !local && hash3(k, L, 55) > 0.55){
+  if(donaCarrer && !especial && !local && hash3(k, L, 55) >= 1 - PAR.buguenvillees){
     tv = hash3(k,L,60) < 0.5 ? 0.15 : 0.85;
     const top = y1 - 0.06;
     q(tv-0.012/len, tv+0.012/len, y0+0.09, top-0.12, 0.014, ESCORCA);
@@ -157,7 +157,7 @@ function paret(G, A, B, y0, y1, col, ci, L, e, plantaBaixa, donaCarrer, especial
   }
 
   // fanal de paret penjat d'un braç de forja
-  if(donaCarrer && plantaBaixa && !especial && !local && len > 0.7 && hash3(k,L,123) < 0.32){
+  if(donaCarrer && plantaBaixa && !especial && !local && len > 0.7 && hash3(k,L,123) < PAR.fanalsParet){
     const tf = tv > 0 ? 1 - tv : (hash3(k,L,124) < 0.5 ? 0.15 : 0.85), yb = y0 + 0.74;
     const a = P(tf, 0, 0.005), b = P(tf, 0, 0.15);
     biga(G, {x:a[0], z:a[2]}, {x:b[0], z:b[2]}, yb-0.02, yb, 0.02, FERRO);
@@ -200,12 +200,12 @@ function paret(G, A, B, y0, y1, col, ci, L, e, plantaBaixa, donaCarrer, especial
 
   const arc = ambArc(ci), forat = arc ? qa : q;
   const pc = colorPorticons(ci), pcF = fosc(pc, 0.72);
-  const balco = h > 0.66 && !plantaBaixa;
+  const balco = h >= 1 - PAR.balcons && !plantaBaixa;
   const ya = balco ? y0 + 0.06 : y0 + 0.28, yb = balco ? y0 + 0.62 : ya + 0.34;
 
   forat(t0-fm, t1+fm, ya-0.03, yb+0.035, 0.006, colMarc(ci));    // marc
   // buit: més o menys la meitat de les finestres tenen llum de nit, cadascuna d'un to
-  if(hash3(ci, L*5 + e, 71) < 0.55) forat(t0, t1, ya, yb, 0.010, fosc(CALID, 0.65 + hash3(ci,L,e+72)*0.35), GF);
+  if(hash3(ci, L*5 + e, 71) < PAR.llumFinestres) forat(t0, t1, ya, yb, 0.010, fosc(CALID, 0.65 + hash3(ci,L,e+72)*0.35), GF);
   else                              forat(t0, t1, ya, yb, 0.010, FOSC);
 
   const portico = (ta, tb) => {                   // fulla amb tres llistons

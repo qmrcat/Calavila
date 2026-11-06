@@ -8,6 +8,7 @@
    pot fer servir el que ja s'ha carregat abans:
 
      base.js              utilitats, paleta de colors i mides
+     parametres.js        els percentatges que fan el poble com és, i el seu panell
      quadricula.js        la quadrícula irregular
      geometria.js         parets, finestres, vegetació, mobiliari, torres
      platja-ponts.js      platja i ponts

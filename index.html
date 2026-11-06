@@ -101,6 +101,18 @@
       <button id="btn-festa" aria-pressed="false" title="Damassos als balcons i banderetes als carrers">Festa Major</button>
       <button id="btn-gegants" aria-pressed="false" title="Una trobada de gegants, tots junts a la plaça amb més lloc">Gegants</button>
     </div>
+    <p class="etiq">Paràmetres</p>
+    <div class="row">
+      <button id="btn-params" aria-expanded="false" aria-controls="panel-params"
+              title="Els percentatges que fan el poble com és: terrats, balcons, banderes de la Diada, damassos...">Paràmetres&#8230;</button>
+    </div>
+    <div id="panel-params">
+      <p class="nota">Cada barra diu quina part en té. El poble es refà en deixar-la anar, i els valors es desen en aquest navegador.</p>
+      <div id="params"></div>
+      <div class="row">
+        <button id="btn-params-defecte" title="Torna tots els paràmetres als valors per defecte">Tots per defecte</button>
+      </div>
+    </div>
     <p class="etiq">Imatge de la vila</p>
     <div class="row">
       <button id="btn-foto-baixa" title="Desa una imatge del que es veu ara, sense el panell">Descarrega</button>
@@ -156,6 +168,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <!-- l'ordre importa: vegeu la capçalera de js/base.js -->
 <script src="js/base.js"></script>
+<script src="js/parametres.js"></script>
 <script src="js/quadricula.js"></script>
 <script src="js/geometria.js"></script>
 <script src="js/platja-ponts.js"></script>

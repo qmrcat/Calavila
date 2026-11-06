@@ -200,15 +200,44 @@ Al final del panell hi ha la secció **Configuració**, plegada: clica'n l'etiqu
 - **Hora del dia:** dia, nit o automàtic.
 - **Escena:** **Quadrícula** mostra o amaga la quadrícula sobre l'aigua, i **Gavines** les fa volar o les atura. Per defecte volen, i l'opció es recorda en aquest navegador. **Gent** omple el poble de gent, gossos i gats (vegeu *Gent*). Per defecte no n'hi ha, i també es recorda en aquest navegador.
 - **Festes:** **Guarniments de Nadal** guarneix el poble (vegeu *Nadal*), **Diada** hi penja senyeres i estelades (vegeu *Diada*), **Festa Major** l'engalana i **Gegants** hi porta una trobada de gegants (vegeu *Festa Major*). Es poden activar alhora. Per defecte estan desactivats, i també es recorden en aquest navegador.
+- **Paràmetres:** els percentatges que fan el poble com és: quantes cobertes són terrat, quantes finestres tenen balcó, quantes cases pengen bandera per la Diada... (vegeu *Paràmetres*).
 - **Imatge de la vila:** **Descarrega** desa una imatge PNG del que es veu ara, sense el panell ni el ressaltat del cursor (`cala-AAAAMMDD-HHMM.png`). **Copia** la posa al porta-retalls, per enganxar-la en un missatge o un document. Si el navegador no deixa copiar imatges, ho diu, i llavors cal fer servir Descarrega.
 - **Partida:** desar, copiar i carregar partides (vegeu *Partides*).
+
+### Paràmetres
+
+A **Configuració → Paràmetres…** hi ha, agrupats per temes, tots els percentatges que decideixen com es veu el poble:
+
+- **Cases:** cobertes amb terrat, teulades a quatre aigües, xemeneies, finestres amb balcó, finestres de mig punt, sòcols, buguenvíl·lees, fanals de paret i finestres amb llum de nit.
+- **Carrers i places:** testos, bancs, fanals i arbres.
+- **Port:** barques amarrades i norais.
+- **Diada:** cases amb bandera, estelades (la resta, senyeres) i cases amb dues banderes.
+- **Festa Major:** balcons amb damàs i carrers amb banderetes.
+- **Nadal:** cases guarnides, carrers amb llums i llums blanques (la resta, de colors).
+- **Gent:** quants grups caminen com a molt, bancs i taules de terrassa ocupats, i gent a la platja.
+
+Cada paràmetre té una barra, i en deixar-la anar el poble es refà. Els canviats es marquen en color, amb un botó per tornar-los al valor per defecte; també hi ha **Per defecte** per a cada grup i **Tots per defecte**. Cada element té un número fix a l'atzar, i el paràmetre diu fins on arriba: si apuges els terrats, les cases que ja en tenien en continuen tenint i se n'hi afegeixen d'altres.
+
+Els valors es desen en aquest navegador, però no a la partida: una partida oberta en un altre navegador es veurà amb els paràmetres d'allà.
+
+També es poden canviar des del codi, o des de la consola del navegador:
+
+```js
+parametre('terrats')                         // 0.3
+posaParametre('terrats', 0.5)                // de 0 a 1; el poble es refà i es desa
+posaParametres({damassos: 0.6, estelades: 0.2})
+restableixParametres('diada')                // els d'un grup, o tots sense dir-ne cap
+PARAMETRES                                   // la llista, amb els valors per defecte
+```
+
+Tots són a `js/parametres.js`: per canviar un valor per defecte, o afegir-hi un paràmetre nou, només cal tocar la llista `PARAMETRES`.
 
 ### Només consulta
 
 Amb **Només consulta** activat, el poble es pot mirar però no canviar. Va bé per ensenyar-lo sense por que algú el toqui.
 
 - La càmera funciona com sempre: girar, moure't i acostar-te, amb el ratolí, el tàctil o el teclat.
-- S'amaguen els modes, la paleta, **Treure**, desfer i refer, **Poble nou**, **Cala nova**, **Buidar**, **Places auto.**, la mida de la cala i carregar una partida. El botó dret no treu res, i les tecles que construeixen no fan res. L'hora, la quadrícula, les gavines, la gent, les festes i la imatge de la vila sí que es poden canviar, perquè no toquen el poble.
+- S'amaguen els modes, la paleta, **Treure**, desfer i refer, **Poble nou**, **Cala nova**, **Buidar**, **Places auto.**, la mida de la cala i carregar una partida. El botó dret no treu res, i les tecles que construeixen no fan res. L'hora, la quadrícula, les gavines, la gent, les festes, els paràmetres i la imatge de la vila sí que es poden canviar, perquè no toquen el poble.
 - **Què és cada cosa:** clica qualsevol cel·la i, al costat del cursor, surt una fitxa que diu què hi ha:
   - **Casa:** els pisos, el color, el porxo, el local de la planta baixa, la teulada (i si s'ha triat a mà), si té plaques solars, i si per Nadal o per la Diada està guarnida.
   - **Torre:** campanar o torre de guaita.
@@ -362,6 +391,7 @@ index.html        estructura del panell
 estils.css        estils del panell
 js/
   base.js              utilitats, paleta de colors i mides
+  parametres.js        els percentatges que fan el poble com és, i el seu panell
   quadricula.js        la quadrícula irregular
   geometria.js         parets, finestres, vegetació, mobiliari, torres
   platja-ponts.js      platja (l'arena i el que hi ha a sobre) i ponts

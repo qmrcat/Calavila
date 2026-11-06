@@ -28,8 +28,8 @@ const DAMASSOS = [                                // fons, dibuix i vora
 const CORDILL = C('#5a5249');
 
 /* --- damassos --- */
-// cada balcó, pel seu compte: un 30 %, més o menys
-function damasAqui(ci, L, e){ return festa && hash3(ci*7 + e, L, 501) < 0.30; }
+// cada balcó, pel seu compte: un 30 %, més o menys (vegeu parametres.js)
+function damasAqui(ci, L, e){ return festa && hash3(ci*7 + e, L, 501) < PAR.damassos; }
 
 // un damàs penjat d'una barana: A, el cantó de dalt d'un costat; U, al llarg de la paret; N, enfora.
 // Fons llis, una vora, un rombe al mig amb un altre a dins i serrell a baix
@@ -61,7 +61,7 @@ function damas(G, A, U, N, w, hb, ci, L, e){
 /* --- banderetes als carrers --- */
 // l'eix (0 o 1) on hi ha cases enfrontades prou altes per penjar-hi les banderetes, o -1
 function eixFesta(ci){
-  if(!esCarrer[ci] || span[ci] || esMunt(ci) || hash3(ci, 503, 1) > 0.85) return -1;
+  if(!esCarrer[ci] || span[ci] || esMunt(ci) || hash3(ci, 503, 1) >= PAR.banderetes) return -1;
   const sota = Math.max(...nvC[ci])*ALT + CARRER_Y + 1.1;
   const alta = b => b >= 0 && heff[b] > 0 && !span[b] && heff[b]*ALT > sota + 0.3 && base[b]*ALT < sota - 0.3;
   const nb = cells[ci].nb, prim = hash3(ci, 503, 2) < 0.5 ? 0 : 1;

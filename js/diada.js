@@ -29,8 +29,8 @@ const BLAU_E   = C('#1f5aa6');
 const BLANC_E  = C('#fbfbf6');
 const VENT = (() => { const a = 0.65; return {x: Math.cos(a), z: Math.sin(a)}; })();   // cap on onegen les dels pals
 
-const casaDiada = ci => hash3(ci, 401, 1) < 0.45;
-const esEstelada = ci => hash3(ci, 403, 1) < 0.5;
+const casaDiada = ci => hash3(ci, 401, 1) < PAR.casesBandera;
+const esEstelada = ci => hash3(ci, 403, 1) < PAR.estelades;
 
 // paret() i ferCoberta() hi apunten els llocs; només a les cases triades
 function apuntaDiada(ci, prio, fer){
@@ -47,7 +47,7 @@ function banderesDiada(){
     // la planta baixa (prio 0.9) i la teulada (1.5), només si no hi ha res més
     const alts = llocs.some(l => l.prio < 0.9) ? llocs.filter(l => l.prio < 0.9) : llocs;
     const ordre = alts.map((l, i) => ({l, v: l.prio + hash3(ci, i, 404)*0.6})).sort((a, b) => a.v - b.v);
-    const n = alts.length >= 3 && hash3(ci, 402, 1) < 0.35 ? 2 : 1;
+    const n = alts.length >= 3 && hash3(ci, 402, 1) < PAR.duesBanderes ? 2 : 1;
     for(let k=0;k<n;k++) ordre[k].l.fer();
   }
 }

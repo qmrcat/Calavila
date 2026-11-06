@@ -84,6 +84,21 @@ button:disabled{opacity:.38; cursor:default}
 .stat .rellotge b{color:var(--mar); font-variant-numeric:tabular-nums}
 .hud .nota{margin-top:10px; font-size:11.5px; color:#7d8b8f}
 #panel{display:none; margin-top:10px}
+/* paràmetres: un grup desplegable per tema, i una barra per paràmetre */
+#panel-params{display:none; margin-top:8px}
+#panel-params.obert{display:block}
+#panel-params .nota{margin:0 0 6px}
+.pgrup{border-top:1px solid rgba(20,82,107,.15); padding:6px 0 2px}
+.pgrup summary{cursor:pointer; color:var(--mar); font-weight:600}
+.pgrup .row{margin:4px 0 6px}
+.pfila{margin-top:8px}
+.pcap{display:flex; align-items:center; gap:6px}
+.pcap label{flex:1; min-width:0}
+.pcap output{font-variant-numeric:tabular-nums; color:#4a5b60}
+.pfila.canviat output{color:var(--teula); font-weight:600}
+.pcap .ptorna{flex:0 0 auto; padding:0 6px; font-size:13px; line-height:20px; height:22px}
+.pcap .ptorna[hidden]{display:none}
+.pfila input[type=range]{display:block; width:100%; margin:2px 0 0; accent-color:var(--mar); height:22px}
 #panel.obert{display:block}
 #codi{
   display:block; width:100%; height:64px; resize:vertical; padding:6px;

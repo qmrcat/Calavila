@@ -158,7 +158,7 @@ let fanals = new Set();
 function volFanal(ci){
   if(pont[ci]) return hash3(ci,97,1) < 0.5;
   if(!esCarrer[ci] || escalaE[ci] >= 0 || muntSup[ci] || (fars[ci] && !span[ci]) || esMercat(ci) || terrassaDe.has(ci) || (nadal && arbreNadalAqui(ci)) || gegantsAqui(ci)) return false;
-  if(!moll[ci]){ const h = hash3(ci,21,3); return !span[ci] && h >= 0.31 && h < 0.43; }
+  if(!moll[ci]) return !span[ci] && mobleCarrer(ci) === 'fanal';
   if(esPuntaMoll(ci) && !span[ci] && hash3(ci,160,1) < 0.7) return false;
   const h = hash3(ci,150,1); return h >= 0.44 && h < 0.58;
 }

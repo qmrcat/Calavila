@@ -283,7 +283,7 @@ function ferCoberta(G, llista, h, clau){
     con(G, c.x, c.z, 0.012, 0.010, y+cim-0.02, y+cim+0.26, 4, FERRO, false);
     bola(G, c.x, y+cim+0.06, c.z, 0.045, 0.08, BRONZE, llista[0], 6);
     biga(G, {x:c.x-0.09, z:c.z}, {x:c.x+0.09, z:c.z}, y+cim+0.21, y+cim+0.23, 0.012, FERRO);
-  } else if(hash3(clau,7,7) < 0.6 && !solar[clau]){   // xemeneia, a la mateixa casa que decideix l'estil (si no hi ha plaques)
+  } else if(hash3(clau,7,7) < PAR.xemeneies && !solar[clau]){   // xemeneia, a la mateixa casa que decideix l'estil (si no hi ha plaques)
     const ci = clau;
     const cel = cells[ci], vi = cel.vi;
     const dmin = Math.min(d.get(vi[0]), d.get(vi[1]), d.get(vi[2]), d.get(vi[3]));
@@ -483,21 +483,28 @@ function paviment(G, cel, ci){
   return {y: (Y[0]+Y[1]+Y[2]+Y[3])/4, pla: false};
 }
 
+// què hi ha en una cel·la de carrer: 'testos', 'banc', 'fanal', 'arbre' o res, segons els paràmetres
+// (els quatre percentatges, l'un darrere l'altre; volFanal() també ho mira)
+function mobleCarrer(ci){
+  const h = hash3(ci, 21, 3), a = PAR.testos, b = a + PAR.bancs, c = b + PAR.fanals, d = c + PAR.arbres;
+  return h < a ? 'testos' : h < b ? 'banc' : h < c ? 'fanal' : h < d ? 'arbre' : null;
+}
+
 function mobiliari(G, cel, ci, y, sotaVolta){
-  const h = hash3(ci, 21, 3), c = cel.c;
+  const moble = mobleCarrer(ci), c = cel.c;
   const capA = (k, f) => entre(c, cel.p[k], f);   // punt entre el centre i un cantó
-  if(h < 0.24){                                   // un o dos testos amb flors
+  if(moble === 'testos'){                         // un o dos testos amb flors
     const k = Math.floor(hash3(ci,22,4)*4), a = capA(k, 0.6);
     test(G, a.x, y, a.z, ci);
     if(hash3(ci,22,5) < 0.5){ const b = capA((k+1)%4, 0.62); test(G, b.x, y, b.z, ci + 7919, 0.8); }
-  } else if(h < 0.31){                            // banc de pedra, paral·lel a una aresta
+  } else if(moble === 'banc'){                    // banc de pedra, paral·lel a una aresta
     const k = Math.floor(hash3(ci,24,4)*4), A = cel.p[k], B = cel.p[(k+1)%4];
     const m = entre(entre(A,B,0.5), c, 0.32), l = Math.hypot(B.x-A.x, B.z-A.z) || 1;
     banc(G, m.x, m.z, (B.x-A.x)/l, (B.z-A.z)/l, y);
     BANCS.push({ci, k, x: m.x, z: m.z, ux: (B.x-A.x)/l, uz: (B.z-A.z)/l, y, mar: false}); OBST.set(ci, k);   // hi pot seure gent
-  } else if(h < 0.43){                            // fanal, si no n'hi ha cap al costat (vegeu triaFanals)
+  } else if(moble === 'fanal'){                   // fanal, si no n'hi ha cap al costat (vegeu triaFanals)
     if(fanals.has(ci)){ const a = capA(Math.floor(hash3(ci,23,4)*4), 0.72); fanal(G, a.x, y, a.z); }
-  } else if(h < 0.53 && !sotaVolta){              // arbre de plaça
+  } else if(moble === 'arbre' && !sotaVolta){     // arbre de plaça
     arbre(G, c.x, y, c.z, 0.95, ci);
     OBST.set(ci, -1);                             // la gent hi passa pel costat
   }
